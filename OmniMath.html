@@ -1,0 +1,826 @@
+<!-- é um app muito legal para poder conseguir visualizar graficos, tbm feito 100% por ia, via gemini 3.1 PRO -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniMath - Visualizador Interativo</title>
+    <!-- Tailwind CSS para Estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /* Estilos customizados e scrollbar */
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #020617; /* slate-950 */
+            color: #e2e8f0; /* slate-200 */
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #334155;
+            border-radius: 10px;
+        }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+            background-color: #475569;
+        }
+
+        /* Fundo de grade pontilhada animada */
+        .grid-bg {
+            background-image: 
+                linear-gradient(to right, #1e293b 1px, transparent 1px),
+                linear-gradient(to bottom, #1e293b 1px, transparent 1px);
+            background-size: 4rem 4rem;
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, #000 20%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, #000 20%, transparent 100%);
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Ocultar elementos */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col selection:bg-cyan-500/30">
+
+    <!-- Cabeçalho / Área de Input -->
+    <header class="h-20 border-b border-slate-800 glass-panel flex items-center px-6 shrink-0 z-20 relative shadow-md">
+        <div class="flex items-center gap-3 w-64">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                <i data-lucide="sigma" class="text-white w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">OmniMath</h1>
+                <p class="text-xs text-slate-500">Visualizador Interativo</p>
+            </div>
+        </div>
+
+        <form id="math-form" class="flex-1 max-w-3xl mx-auto relative group">
+            <div id="input-glow" class="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+            <div class="relative flex items-center bg-slate-900 rounded-xl border border-slate-700 shadow-inner">
+                <div class="pl-4 text-slate-400">
+                    <i data-lucide="calculator" class="w-5 h-5"></i>
+                </div>
+                <input
+                    type="text"
+                    id="math-input"
+                    placeholder="Digite uma função (ex: sin(x)*x^2) ou cálculo (ex: 2+2)..."
+                    class="w-full bg-transparent border-none py-3 px-4 text-lg text-white placeholder-slate-500 focus:outline-none focus:ring-0"
+                    spellcheck="false"
+                    autocomplete="off"
+                />
+                <button type="submit" class="pr-4 pl-2 text-cyan-400 hover:text-cyan-300 transition-colors font-semibold">
+                    Plotar
+                </button>
+            </div>
+        </form>
+
+        <div class="w-64 flex justify-end">
+            <button id="btn-help" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors" title="Ajuda">
+                <i data-lucide="help-circle" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Área Principal -->
+    <main class="flex-1 flex overflow-hidden relative z-10">
+        
+        <!-- Barra Lateral Esquerda -->
+        <aside class="w-80 border-r border-slate-800 glass-panel flex flex-col z-20 shadow-2xl shrink-0">
+            <div class="flex border-b border-slate-800">
+                <button id="tab-graphing" class="flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 border-b-2 border-cyan-500 text-cyan-400 transition-colors">
+                    <i data-lucide="line-chart" class="w-4 h-4"></i> Funções
+                </button>
+                <button id="tab-history" class="flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-colors">
+                    <i data-lucide="history" class="w-4 h-4"></i> Histórico
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 custom-scrollbar" id="sidebar-content">
+                <!-- Conteúdo das abas será renderizado aqui pelo JS -->
+            </div>
+        </aside>
+
+        <!-- Área do Canvas (Gráfico) -->
+        <div id="canvas-container" class="flex-1 relative cursor-crosshair overflow-hidden bg-slate-950">
+            <!-- Grade animada de fundo -->
+            <div class="absolute inset-0 grid-bg opacity-20 pointer-events-none"></div>
+            
+            <canvas id="graph-canvas" class="absolute inset-0 block w-full h-full"></canvas>
+
+            <!-- Controles Flutuantes -->
+            <div class="absolute bottom-6 right-6 flex flex-col gap-2 glass-panel border border-slate-800 p-2 rounded-2xl shadow-xl z-20">
+                <button id="btn-center" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors group relative" aria-label="Centralizar Origem">
+                    <i data-lucide="crosshair" class="w-5 h-5"></i>
+                    <span class="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-slate-800 text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Centralizar Origem</span>
+                </button>
+            </div>
+
+            <!-- Tooltip de Dados em Tempo Real -->
+            <div id="tooltip" class="hidden absolute pointer-events-none z-30 flex flex-col gap-2 transition-opacity duration-75">
+                <div id="tooltip-content" class="bg-slate-900/90 backdrop-blur-md border border-slate-700 shadow-2xl rounded-lg p-3 text-xs min-w-[140px]">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Tutorial (Bem-vindo) -->
+    <div id="tutorial-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden relative transform transition-all scale-100 opacity-100">
+            <button id="btn-close-tutorial" class="absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            
+            <div class="p-8">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center mb-6 shadow-lg shadow-cyan-500/20">
+                    <i data-lucide="sigma" class="text-white w-8 h-8"></i>
+                </div>
+                
+                <h2 class="text-3xl font-bold text-white mb-2">Bem-vindo ao OmniMath</h2>
+                <p class="text-slate-400 mb-8 leading-relaxed">
+                    Um motor interativo e poderoso para explorar matemática, plotar funções e realizar cálculos instantaneamente.
+                </p>
+
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4">
+                        <div class="bg-cyan-500/10 p-3 rounded-xl text-cyan-400 shrink-0">
+                            <i data-lucide="line-chart" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-medium mb-1">Multi-Plotagem Dinâmica</h3>
+                            <p class="text-sm text-slate-400">Digite <code class="bg-slate-800 px-1 py-0.5 rounded text-cyan-300">sin(x)*x</code> e aperte enter. A tela se ajusta automaticamente para focar na nova curva.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-4">
+                        <div class="bg-purple-500/10 p-3 rounded-xl text-purple-400 shrink-0">
+                            <i data-lucide="maximize" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-medium mb-1">Tela Infinita</h3>
+                            <p class="text-sm text-slate-400">Use a roda do mouse para dar zoom em torno do cursor, e clique/arraste para mover-se pelo plano cartesiano infinito.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-4">
+                        <div class="bg-green-500/10 p-3 rounded-xl text-green-400 shrink-0">
+                            <i data-lucide="mouse-pointer-2" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-medium mb-1">Inspeção em Tempo Real</h3>
+                            <p class="text-sm text-slate-400">Passe o mouse sobre o gráfico para ver uma mira interativa capturando valores em todas as funções ativas simultaneamente.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btn-start" class="w-full mt-10 bg-white text-slate-900 font-semibold py-3.5 rounded-xl hover:bg-slate-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)]">
+                    Começar a Explorar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lógica JavaScript -->
+    <script>
+        // Inicializa os ícones
+        lucide.createIcons();
+
+        // --- Variáveis Globais e Estado ---
+        const COLORS = ['#06b6d4', '#ec4899', '#eab308', '#22c55e', '#f97316', '#a855f7'];
+        
+        let state = {
+            expressions: [
+                { id: 1, text: 'sin(x) * x', fn: compileMath('sin(x) * x'), color: COLORS[0], visible: true },
+                { id: 2, text: 'x^2 / 10', fn: compileMath('x^2 / 10'), color: COLORS[1], visible: true }
+            ],
+            history: [
+                { id: 1, type: 'graph', query: 'sin(x) * x', result: 'Plotado' },
+                { id: 2, type: 'calc', query: '2 + 2 * 5', result: '12' }
+            ],
+            viewport: { xMin: -10, xMax: 10, yMin: -10, yMax: 10 },
+            activeTab: 'graphing',
+            mouseHoverData: null,
+            isDragging: false
+        };
+
+        // DOM Elements
+        const canvas = document.getElementById('graph-canvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+        const mathForm = document.getElementById('math-form');
+        const mathInput = document.getElementById('math-input');
+        const inputGlow = document.getElementById('input-glow');
+        const sidebarContent = document.getElementById('sidebar-content');
+        const tabGraphing = document.getElementById('tab-graphing');
+        const tabHistory = document.getElementById('tab-history');
+        const tooltip = document.getElementById('tooltip');
+        const tooltipContent = document.getElementById('tooltip-content');
+        const modal = document.getElementById('tutorial-modal');
+
+        // Posição anterior do mouse para o arrasto (pan)
+        let lastMouse = { x: 0, y: 0 };
+
+        // --- Utilitário: Parser Matemático ---
+        function compileMath(expr) {
+            if (!expr) return null;
+            let s = expr.toLowerCase().replace(/\s+/g, '');
+            
+            // Multiplicação implícita: 2x -> 2*x, 2(x) -> 2*(x), 2sin -> 2*Math.sin
+            s = s.replace(/(\d)([a-z\(])/g, '$1*$2');
+            
+            // Expoentes: x^2 -> x**2
+            s = s.replace(/\^/g, '**');
+            
+            // Funções e Constantes Matemáticas
+            const mathFuncs = [
+                'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'sqrt', 
+                'log', 'exp', 'abs', 'round', 'floor', 'ceil', 'sinh', 'cosh', 'tanh'
+            ];
+            mathFuncs.forEach(fn => {
+                s = s.replace(new RegExp(`\\b${fn}\\b`, 'g'), `Math.${fn}`);
+            });
+            s = s.replace(/\bpi\b/g, 'Math.PI');
+            s = s.replace(/\be\b/g, 'Math.E');
+            s = s.replace(/\bln\b/g, 'Math.log');
+
+            try {
+                // Cria uma função segura
+                const fn = new Function('x', `return ${s};`);
+                fn(1); // Teste básico para pegar erros de sintaxe imediatamente
+                return fn;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // --- Renderização da Interface (Sidebar) ---
+        function renderSidebar() {
+            sidebarContent.innerHTML = '';
+
+            if (state.activeTab === 'graphing') {
+                // Aba de Funções
+                const containerDiv = document.createElement('div');
+                containerDiv.className = 'space-y-4';
+
+                if (state.expressions.length === 0) {
+                    containerDiv.innerHTML = `
+                        <div class="text-center p-8 text-slate-500">
+                            <i data-lucide="sparkles" class="w-8 h-8 mx-auto mb-3 opacity-20"></i>
+                            <p>Nenhuma função ativa. Digite uma equação acima para começar.</p>
+                        </div>
+                    `;
+                } else {
+                    state.expressions.forEach(exp => {
+                        const item = document.createElement('div');
+                        item.className = 'group bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 flex items-center gap-3 hover:bg-slate-800 transition-colors shadow-sm';
+                        
+                        const colorDot = exp.visible ? exp.color : '#334155';
+                        const shadow = exp.visible ? `0 0 8px ${exp.color}` : 'none';
+
+                        item.innerHTML = `
+                            <div class="w-3 h-3 rounded-full shrink-0" style="background-color: ${colorDot}; box-shadow: ${shadow};"></div>
+                            <div class="flex-1 overflow-hidden">
+                                <p class="font-mono text-sm truncate text-slate-200">
+                                    <span class="text-slate-500 mr-1">f(x) =</span>
+                                    ${exp.text}
+                                </p>
+                            </div>
+                            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onclick="toggleVisibility(${exp.id})" class="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-md" title="Mostrar/Ocultar">
+                                    <i data-lucide="${exp.visible ? 'eye' : 'eye-off'}" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="removeExpression(${exp.id})" class="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-md" title="Deletar">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        `;
+                        containerDiv.appendChild(item);
+                    });
+                }
+
+                // Ferramentas Rápidas
+                const toolsDiv = document.createElement('div');
+                toolsDiv.className = 'pt-6';
+                toolsDiv.innerHTML = `
+                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Ferramentas Rápidas</h3>
+                    <div class="grid grid-cols-2 gap-2" id="quick-tools-grid"></div>
+                `;
+                containerDiv.appendChild(toolsDiv);
+                sidebarContent.appendChild(containerDiv);
+
+                const grid = document.getElementById('quick-tools-grid');
+                ['sin(x)', 'cos(x)', 'sqrt(x)', 'exp(x)', 'log(x)', 'abs(x)'].forEach(fn => {
+                    const btn = document.createElement('button');
+                    btn.className = 'px-3 py-2 text-sm bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-300 font-mono transition-colors';
+                    btn.innerText = fn;
+                    btn.onclick = () => {
+                        mathInput.value += fn;
+                        mathInput.focus();
+                    };
+                    grid.appendChild(btn);
+                });
+
+            } else {
+                // Aba de Histórico
+                const containerDiv = document.createElement('div');
+                containerDiv.className = 'space-y-3';
+                
+                if (state.history.length === 0) {
+                     containerDiv.innerHTML = `<p class="text-center text-slate-500 p-4 text-sm">Histórico vazio.</p>`;
+                }
+
+                state.history.forEach(item => {
+                    const histItem = document.createElement('div');
+                    histItem.className = 'bg-slate-800/50 p-3 rounded-xl border border-slate-700/50';
+                    const resColor = item.type === 'graph' ? 'text-cyan-400' : 'text-green-400';
+                    histItem.innerHTML = `
+                        <p class="font-mono text-sm text-slate-300 truncate mb-1">${item.query}</p>
+                        <p class="text-xs font-medium ${resColor}">= ${item.result}</p>
+                    `;
+                    containerDiv.appendChild(histItem);
+                });
+                sidebarContent.appendChild(containerDiv);
+            }
+
+            lucide.createIcons();
+        }
+
+        // Funções da UI
+        window.toggleVisibility = function(id) {
+            state.expressions = state.expressions.map(e => e.id === id ? { ...e, visible: !e.visible } : e);
+            renderSidebar();
+            drawCanvas();
+        };
+
+        window.removeExpression = function(id) {
+            state.expressions = state.expressions.filter(e => e.id !== id);
+            renderSidebar();
+            drawCanvas();
+        };
+
+        function switchTab(tab) {
+            state.activeTab = tab;
+            if (tab === 'graphing') {
+                tabGraphing.classList.replace('border-transparent', 'border-cyan-500');
+                tabGraphing.classList.replace('text-slate-400', 'text-cyan-400');
+                tabHistory.classList.replace('border-cyan-500', 'border-transparent');
+                tabHistory.classList.replace('text-cyan-400', 'text-slate-400');
+            } else {
+                tabHistory.classList.replace('border-transparent', 'border-cyan-500');
+                tabHistory.classList.replace('text-slate-400', 'text-cyan-400');
+                tabGraphing.classList.replace('border-cyan-500', 'border-transparent');
+                tabGraphing.classList.replace('text-cyan-400', 'text-slate-400');
+            }
+            renderSidebar();
+        }
+
+        tabGraphing.addEventListener('click', () => switchTab('graphing'));
+        tabHistory.addEventListener('click', () => switchTab('history'));
+
+        function showError() {
+            inputGlow.classList.remove('from-cyan-500', 'to-blue-600');
+            inputGlow.classList.add('from-red-500', 'to-red-600', 'opacity-50');
+            setTimeout(() => {
+                inputGlow.classList.add('from-cyan-500', 'to-blue-600');
+                inputGlow.classList.remove('from-red-500', 'to-red-600', 'opacity-50');
+            }, 2000);
+        }
+
+        mathForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const val = mathInput.value.trim();
+            if (!val) return;
+
+            // Checar se é puramente numérico (sem variável 'x')
+            if (!/[xX]/.test(val) && !/[a-zA-Z]+\(x\)/.test(val)) {
+                try {
+                    const fn = compileMath(val);
+                    const result = fn(0); // avalia
+                    if (!isNaN(result)) {
+                        state.history.unshift({ id: Date.now(), type: 'calc', query: val, result: result.toPrecision(6) });
+                        mathInput.value = '';
+                        switchTab('history');
+                        return;
+                    }
+                } catch (e) {
+                    // fallthrough para grafico
+                }
+            }
+
+            // Tratar como função
+            const fn = compileMath(val);
+            if (!fn) {
+                showError();
+                return;
+            }
+
+            const newColor = COLORS[state.expressions.length % COLORS.length];
+            const newExp = {
+                id: Date.now(),
+                text: val,
+                fn: fn,
+                color: newColor,
+                visible: true
+            };
+
+            state.expressions.push(newExp);
+            state.history.unshift({ id: Date.now(), type: 'graph', query: val, result: 'Plotado' });
+            mathInput.value = '';
+            
+            switchTab('graphing');
+            autoScaleForFunction(fn);
+        });
+
+        // --- Lógica do Motor Matemático / Escala Automática ---
+        function autoScaleForFunction(fn) {
+            let min = Infinity;
+            let max = -Infinity;
+            const { xMin, xMax } = state.viewport;
+            const step = (xMax - xMin) / 100;
+            
+            for (let x = xMin; x <= xMax; x += step) {
+                try {
+                    const y = fn(x);
+                    if (isFinite(y) && !isNaN(y)) {
+                        if (y < min) min = y;
+                        if (y > max) max = y;
+                    }
+                } catch (e) {}
+            }
+
+            if (min !== Infinity && max !== -Infinity) {
+                const padding = (max - min) * 0.2 || 2; // 20% de padding ou pelo menos 2
+                state.viewport.yMin = min - padding;
+                state.viewport.yMax = max + padding;
+                drawCanvas();
+            }
+        }
+
+        document.getElementById('btn-center').addEventListener('click', () => {
+            const xRange = state.viewport.xMax - state.viewport.xMin;
+            const yRange = state.viewport.yMax - state.viewport.yMin;
+            state.viewport = {
+                xMin: -xRange/2, xMax: xRange/2,
+                yMin: -yRange/2, yMax: yRange/2
+            };
+            drawCanvas();
+        });
+
+        // --- Lógica do Canvas (Viewport, Zoom, Pan) ---
+        function resizeCanvas() {
+            // Suporte a monitores de alta resolução (Retina)
+            const dpr = window.devicePixelRatio || 1;
+            const rect = container.getBoundingClientRect();
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            ctx.scale(dpr, dpr);
+            
+            // Atribui dimensões lógicas para uso nos cálculos
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+            
+            canvas.logicalWidth = rect.width;
+            canvas.logicalHeight = rect.height;
+
+            drawCanvas();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function screenToGraph(screenX, screenY) {
+            const { xMin, xMax, yMin, yMax } = state.viewport;
+            const width = canvas.logicalWidth;
+            const height = canvas.logicalHeight;
+            const graphX = xMin + (screenX / width) * (xMax - xMin);
+            const graphY = yMax - (screenY / height) * (yMax - yMin);
+            return { x: graphX, y: graphY };
+        }
+
+        function graphToScreen(graphX, graphY) {
+            const { xMin, xMax, yMin, yMax } = state.viewport;
+            const width = canvas.logicalWidth;
+            const height = canvas.logicalHeight;
+            const screenX = ((graphX - xMin) / (xMax - xMin)) * width;
+            const screenY = height - ((graphY - yMin) / (yMax - yMin)) * height;
+            return { x: screenX, y: screenY };
+        }
+
+        // Interações de Mouse no Canvas
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const gCoords = screenToGraph(mouseX, mouseY);
+            
+            const prev = state.viewport;
+            const xRange = (prev.xMax - prev.xMin) * zoomFactor;
+            const yRange = (prev.yMax - prev.yMin) * zoomFactor;
+            
+            const xRatio = mouseX / canvas.logicalWidth;
+            const yRatio = mouseY / canvas.logicalHeight;
+            
+            state.viewport = {
+                xMin: gCoords.x - xRange * xRatio,
+                xMax: gCoords.x + xRange * (1 - xRatio),
+                yMin: gCoords.y - yRange * (1 - yRatio),
+                yMax: gCoords.y + yRange * yRatio
+            };
+            
+            drawCanvas();
+        });
+
+        container.addEventListener('mousedown', (e) => {
+            state.isDragging = true;
+            lastMouse = { x: e.clientX, y: e.clientY };
+            tooltip.classList.add('hidden');
+        });
+
+        container.addEventListener('mousemove', (e) => {
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            if (state.isDragging) {
+                const dx = e.clientX - lastMouse.x;
+                const dy = e.clientY - lastMouse.y;
+                
+                const prev = state.viewport;
+                const xShift = (dx / canvas.logicalWidth) * (prev.xMax - prev.xMin);
+                const yShift = (dy / canvas.logicalHeight) * (prev.yMax - prev.yMin);
+                
+                state.viewport = {
+                    xMin: prev.xMin - xShift,
+                    xMax: prev.xMax - xShift,
+                    yMin: prev.yMin + yShift,
+                    yMax: prev.yMax + yShift
+                };
+                
+                lastMouse = { x: e.clientX, y: e.clientY };
+                state.mouseHoverData = null;
+                drawCanvas();
+            } else {
+                // Rastreamento de pontos (Hover)
+                const gCoords = screenToGraph(mouseX, mouseY);
+                const hoverPoints = [];
+                
+                state.expressions.filter(exp => exp.visible && exp.fn).forEach(exp => {
+                    try {
+                        const y = exp.fn(gCoords.x);
+                        if (y >= state.viewport.yMin && y <= state.viewport.yMax) {
+                            const sCoords = graphToScreen(gCoords.x, y);
+                            hoverPoints.push({
+                                screenX: sCoords.x,
+                                screenY: sCoords.y,
+                                valX: gCoords.x,
+                                valY: y,
+                                color: exp.color,
+                                expr: exp.text
+                            });
+                        }
+                    } catch (err) {}
+                });
+
+                state.mouseHoverData = {
+                    screenX: mouseX,
+                    screenY: mouseY,
+                    graphX: gCoords.x,
+                    graphY: gCoords.y,
+                    points: hoverPoints
+                };
+
+                // Atualizar Tooltip HTML
+                if (hoverPoints.length > 0) {
+                    tooltip.classList.remove('hidden');
+                    tooltip.style.left = `${mouseX + 15}px`;
+                    tooltip.style.top = `${mouseY + 15}px`;
+                    
+                    let html = `<div class="text-slate-400 mb-2 border-b border-slate-700 pb-1 font-mono">x = ${gCoords.x.toFixed(4)}</div>`;
+                    hoverPoints.forEach(pt => {
+                        html += `
+                            <div class="flex items-center gap-2 mt-1">
+                                <div class="w-2 h-2 rounded-full" style="background-color: ${pt.color}"></div>
+                                <span class="font-mono text-slate-200">f(x) = ${pt.valY.toFixed(4)}</span>
+                            </div>
+                        `;
+                    });
+                    tooltipContent.innerHTML = html;
+                } else {
+                    tooltip.classList.add('hidden');
+                }
+
+                drawCanvas(); // Desenhar crosshair
+            }
+        });
+
+        const handleMouseUp = () => {
+            state.isDragging = false;
+        };
+        container.addEventListener('mouseup', handleMouseUp);
+        container.addEventListener('mouseleave', () => {
+            handleMouseUp();
+            tooltip.classList.add('hidden');
+            state.mouseHoverData = null;
+            drawCanvas();
+        });
+
+        // --- Renderização do Canvas ---
+        function drawCanvas() {
+            if (!canvas.logicalWidth) return;
+            const width = canvas.logicalWidth;
+            const height = canvas.logicalHeight;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            const { xMin, xMax, yMin, yMax } = state.viewport;
+            const xRange = xMax - xMin;
+            const yRange = yMax - yMin;
+
+            // Helper para calcular passos de grade agradáveis
+            const getStep = (range) => {
+                const roughStep = range / 10;
+                const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+                const normalized = roughStep / magnitude;
+                let stepMulti = 1;
+                if (normalized > 5) stepMulti = 10;
+                else if (normalized > 2) stepMulti = 5;
+                else if (normalized > 1) stepMulti = 2;
+                return stepMulti * magnitude;
+            };
+
+            const xStep = getStep(xRange);
+            const yStep = getStep(yRange);
+
+            // --- Desenhar Grade ---
+            ctx.lineWidth = 1;
+            ctx.font = '12px system-ui, sans-serif';
+            
+            // Linhas Verticais (Passos X)
+            let startX = Math.floor(xMin / xStep) * xStep;
+            for (let x = startX; x <= xMax; x += xStep) {
+                if (Math.abs(x) < 1e-10) continue; // Pular eixo 0
+                const sCoords = graphToScreen(x, 0);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.beginPath();
+                ctx.moveTo(sCoords.x, 0);
+                ctx.lineTo(sCoords.x, height);
+                ctx.stroke();
+                
+                // Rótulo
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                const originY = graphToScreen(0, 0).y;
+                const labelY = (originY > 20 && originY < height - 20) ? originY + 16 : height - 10;
+                ctx.fillText(Number(x.toFixed(4)).toString(), sCoords.x + 4, labelY);
+            }
+
+            // Linhas Horizontais (Passos Y)
+            let startY = Math.floor(yMin / yStep) * yStep;
+            for (let y = startY; y <= yMax; y += yStep) {
+                if (Math.abs(y) < 1e-10) continue; // Pular eixo 0
+                const sCoords = graphToScreen(0, y);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.beginPath();
+                ctx.moveTo(0, sCoords.y);
+                ctx.lineTo(width, sCoords.y);
+                ctx.stroke();
+                
+                // Rótulo
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                const originX = graphToScreen(0, 0).x;
+                const labelX = (originX > 0 && originX < width - 40) ? originX + 4 : 4;
+                ctx.fillText(Number(y.toFixed(4)).toString(), labelX, sCoords.y - 4);
+            }
+
+            // --- Desenhar Eixos Principais ---
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            
+            const origin = graphToScreen(0, 0);
+            
+            // Eixo X
+            if (origin.y >= 0 && origin.y <= height) {
+                ctx.beginPath();
+                ctx.moveTo(0, origin.y);
+                ctx.lineTo(width, origin.y);
+                ctx.stroke();
+            }
+            
+            // Eixo Y
+            if (origin.x >= 0 && origin.x <= width) {
+                ctx.beginPath();
+                ctx.moveTo(origin.x, 0);
+                ctx.lineTo(origin.x, height);
+                ctx.stroke();
+            }
+
+            // --- Desenhar Funções ---
+            state.expressions.filter(e => e.visible && e.fn).forEach(exp => {
+                ctx.beginPath();
+                ctx.strokeStyle = exp.color;
+                ctx.lineWidth = 2.5;
+                // Efeito Glow (Brilho)
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = exp.color;
+                
+                let isFirst = true;
+                let prevY = 0;
+
+                // Desenha ponto a ponto baseado nos pixels da tela
+                for (let px = 0; px <= width; px += 2) {
+                    const gx = screenToGraph(px, 0).x;
+                    let gy;
+                    try {
+                        gy = exp.fn(gx);
+                    } catch (e) {
+                        continue;
+                    }
+
+                    if (isNaN(gy) || !isFinite(gy)) {
+                        isFirst = true;
+                        continue;
+                    }
+
+                    const py = graphToScreen(0, gy).y;
+
+                    // Detecção de Assíntota (evita linhas retas cruzando a tela em descontinuidades)
+                    if (!isFirst && Math.abs(gy - prevY) > yRange) {
+                        isFirst = true;
+                    }
+
+                    if (isFirst) {
+                        ctx.moveTo(px, py);
+                        isFirst = false;
+                    } else {
+                        ctx.lineTo(px, py);
+                    }
+                    prevY = gy;
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0; // reset
+            });
+
+            // --- Desenhar Mira / Crosshair do Mouse ---
+            if (state.mouseHoverData && !state.isDragging) {
+                const { screenX, points } = state.mouseHoverData;
+                
+                // Linha Vertical
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(screenX, 0);
+                ctx.lineTo(screenX, height);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Desenhar os pontos nas curvas
+                points.forEach(pt => {
+                    ctx.beginPath();
+                    ctx.fillStyle = pt.color;
+                    ctx.arc(pt.screenX, pt.screenY, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                });
+            }
+        }
+
+        // --- Controles do Modal de Tutorial ---
+        const closeTutorial = () => {
+            modal.classList.add('hidden');
+        };
+        document.getElementById('btn-close-tutorial').addEventListener('click', closeTutorial);
+        document.getElementById('btn-start').addEventListener('click', closeTutorial);
+        document.getElementById('btn-help').addEventListener('click', () => {
+            modal.classList.remove('hidden');
+        });
+
+        // Inicialização
+        renderSidebar();
+        // Pequeno timeout para garantir que os elementos estejam montados
+        setTimeout(() => {
+            resizeCanvas(); 
+        }, 50);
+
+    </script>
+</body>
+</html>
