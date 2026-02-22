@@ -5,119 +5,138 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sintetizador Matemático Pro</title>
     <style>
-        :root { --primary: #00f2ff; --bg: #0a0a0c; --card: #16161a; --text: #e0e0e0; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .container { background: var(--card); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; width: 100%; max-width: 700px; text-align: center; }
-        h1 { font-weight: 300; letter-spacing: 2px; color: var(--primary); margin-bottom: 10px; }
-        canvas { background: #000; border-radius: 12px; width: 100%; height: 250px; border: 1px solid #444; margin: 20px 0; box-shadow: inset 0 0 20px rgba(0, 242, 255, 0.1); }
-        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #000; color: var(--primary); font-family: monospace; font-size: 16px; }
-        .shortcuts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .btn-fast { background: #222; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 6px; cursor: pointer; transition: 0.3s; font-size: 14px; }
-        .btn-fast:hover { background: var(--primary); color: #000; border-color: var(--primary); }
-        .controls { display: flex; gap: 10px; justify-content: center; }
-        .btn-main { padding: 12px 30px; border-radius: 30px; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; }
-        .play { background: var(--primary); color: #000; }
-        .play:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--primary); }
+        :root { --neon: #00f2ff; --pink: #ff007a; --bg: #050507; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; overflow: hidden; }
+        .container { background: #0d0d12; padding: 25px; border-radius: 24px; border: 1px solid #222; width: 90vw; max-width: 800px; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        h1 { font-size: 1.2rem; letter-spacing: 3px; color: var(--neon); margin: 0; text-transform: uppercase; }
+        canvas { background: #000; border-radius: 16px; width: 100%; height: 300px; border: 1px solid #333; cursor: crosshair; }
+        .ui-box { margin-top: 20px; display: grid; gap: 15px; }
+        input { background: #1a1a20; border: 1px solid #333; padding: 15px; border-radius: 12px; color: var(--neon); font-family: 'Courier New', monospace; font-size: 1.1rem; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--neon); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
+        .grid-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; }
+        button { background: #1a1a20; border: 1px solid #333; color: #aaa; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
+        button:hover { background: #2a2a35; color: #fff; border-color: #555; }
+        .main-controls { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-play { background: var(--neon); color: #000; font-weight: bold; flex: 2; border: none; font-size: 1rem; }
+        .btn-play:hover { background: #fff; transform: translateY(-2px); }
+        .zoom-controls { display: flex; gap: 5px; flex: 1; }
+        .zoom-btn { flex: 1; background: #222; border: 1px solid #444; color: #fff; font-size: 1.2rem; }
+        .active-glow { box-shadow: 0 0 20px var(--neon); }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>MATEMÁTICA SONORA</h1>
-        <p>Explore o som das funções matemáticas</p>
-
-        <canvas id="canvas"></canvas>
-
-        <div class="input-group">
-            <input type="text" id="funcInput" value="Math.sin(x / 20)" placeholder="Ex: Math.sin(x/10)">
-        </div>
-
-        <div class="shortcuts">
-            <button class="btn-fast" onclick="addFunc('Math.sin(x/20)')">sin(x)</button>
-            <button class="btn-fast" onclick="addFunc('Math.cos(x/20)')">cos(x)</button>
-            <button class="btn-fast" onclick="addFunc('Math.sqrt(x)*2')">sqrt(x)</button>
-            <button class="btn-fast" onclick="addFunc('Math.exp(x/100)')">exp(x)</button>
-            <button class="btn-fast" onclick="addFunc('Math.log(x)*10')">log(x)</button>
-            <button class="btn-fast" onclick="addFunc('Math.abs(Math.sin(x/20))*50')">abs(x)</button>
-        </div>
-
-        <div class="controls">
-            <button class="btn-main play" id="playBtn" onclick="toggleAudio()">OUVIR FUNÇÃO</button>
-            <button class="btn-main" style="background:#333; color: white;" onclick="draw()">ATUALIZAR GRÁFICO</button>
-        </div>
+<div class="container">
+    <div class="header">
+        <h1>Oscilloscope V2</h1>
+        <div id="status" style="font-size: 0.7rem; color: #444;">ENGINE: READY</div>
     </div>
 
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const input = document.getElementById('funcInput');
-        let audioCtx, oscillator, isPlaying = false;
+    <canvas id="view"></canvas>
 
-        function addFunc(val) {
-            input.value = val;
-            draw();
+    <div class="ui-box">
+        <input type="text" id="formula" value="Math.sin(x/scale)*50">
+
+        <div class="grid-buttons">
+            <button onclick="setF('Math.sin(x/scale)*50')">SENO</button>
+            <button onclick="setF('Math.cos(x/scale)*50')">COSSENO</button>
+            <button onclick="setF('Math.tan(x/scale)*5')">TANGENTE</button>
+            <button onclick="setF('Math.abs(Math.sin(x/scale))*60')">ABS</button>
+            <button onclick="setF('Math.log(Math.abs(x))*10')">LOG</button>
+            <button onclick="setF('(Math.sin(x/scale)+Math.sin(x/(scale*0.8)))*30')">CHORD</button>
+        </div>
+
+        <div class="main-controls">
+            <button class="btn-play" id="masterBtn" onclick="toggle()">INICIAR ÁUDIO</button>
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoom(0.8)">-</button>
+                <button class="zoom-btn" onclick="zoom(1.2)">+</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('view');
+    const ctx = canvas.getContext('2d');
+    const input = document.getElementById('formula');
+    let audioCtx, osc, gain, isRunning = false, scale = 20, scanX = 0;
+
+    function setF(v) { input.value = v; scanX = 0; }
+    function zoom(v) { scale *= v; }
+
+    function draw() {
+        const w = canvas.width = canvas.offsetWidth;
+        const h = canvas.height = canvas.offsetHeight;
+        ctx.clearRect(0, 0, w, h);
+
+        ctx.strokeStyle = '#111';
+        ctx.beginPath();
+        ctx.moveTo(0, h/2); ctx.lineTo(w, h/2);
+        ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#00f2ff';
+        ctx.lineWidth = 2;
+        for(let i=0; i<w; i++) {
+            let x = i - w/2;
+            try {
+                let y = eval(input.value);
+                ctx.lineTo(i, h/2 - y);
+            } catch(e){}
         }
+        ctx.stroke();
 
-        function draw() {
-            const w = canvas.width = canvas.offsetWidth;
-            const h = canvas.height = canvas.offsetHeight;
-            ctx.clearRect(0, 0, w, h);
-
-            // Eixos
-            ctx.strokeStyle = '#333';
+        if(isRunning) {
+            ctx.fillStyle = '#ff007a';
             ctx.beginPath();
-            ctx.moveTo(0, h/2); ctx.lineTo(w, h/2);
-            ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h);
-            ctx.stroke();
+            ctx.arc(scanX, h/2 - getVal(scanX - w/2), 5, 0, Math.PI*2);
+            ctx.fill();
+        }
+        requestAnimationFrame(draw);
+    }
 
-            // Gráfico
-            ctx.beginPath();
-            ctx.strokeStyle = '#00f2ff';
-            ctx.lineWidth = 3;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = '#00f2ff';
+    function getVal(x) {
+        try { return eval(input.value); } catch(e) { return 0; }
+    }
 
-            for (let x_pos = 0; x_pos < w; x_pos++) {
-                let x = x_pos - w/2; // Centraliza o X
-                try {
-                    let y = eval(input.value); 
-                    let y_pos = h/2 - y; 
-                    if (x_pos === 0) ctx.moveTo(x_pos, y_pos);
-                    else ctx.lineTo(x_pos, y_pos);
-                } catch(e) {}
-            }
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+    function toggle() {
+        if(isRunning) {
+            osc.stop();
+            isRunning = false;
+            document.getElementById('masterBtn').innerText = "INICIAR ÁUDIO";
+            return;
         }
 
-        function toggleAudio() {
-            if (isPlaying) {
-                oscillator.stop();
-                isPlaying = false;
-                document.getElementById('playBtn').innerText = "OUVIR FUNÇÃO";
-                return;
-            }
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        osc = audioCtx.createOscillator();
+        gain = audioCtx.createGain();
 
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            oscillator = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        isRunning = true;
+        document.getElementById('masterBtn').innerText = "PARAR";
 
-            oscillator.type = 'sine';
-            // A frequência muda baseada na média da função digitada!
-            oscillator.frequency.setValueAtTime(220, audioCtx.currentTime); 
-
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            oscillator.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            oscillator.start();
-            isPlaying = true;
-            document.getElementById('playBtn').innerText = "PARAR SOM";
+        function audioLoop() {
+            if(!isRunning) return;
+            let x = scanX - canvas.width/2;
+            let y = getVal(x);
+            let freq = 220 + (y * 2);
+            osc.frequency.setTargetAtTime(Math.abs(freq), audioCtx.currentTime, 0.05);
+            
+            scanX += 2;
+            if(scanX > canvas.width) scanX = 0;
+            setTimeout(audioLoop, 16);
         }
+        audioLoop();
+    }
 
-        window.addEventListener('resize', draw);
-        draw();
-    </script>
+    draw();
+</script>
 </body>
 </html>
