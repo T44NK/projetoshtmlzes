@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FileForge — Universal File Generator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0e1117;
+    --surface:   #161b25;
+    --surface2:  #1c2231;
+    --border:    #262d3f;
+    --border2:   #2e3750;
+    --text:      #e8edf8;
+    --muted:     #5a6480;
+    --subtle:    #8892a8;
+    --accent:    #4f8ef7;
+    --accent-dk: #3a72d8;
+    --green:     #34d399;
+    --yellow:    #fbbf24;
+    --red:       #f87171;
+    --radius:    10px;
+    --mono:      'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    --sans:      'Inter', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  html, body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ── */
+  .shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 3rem;
+    gap: 1.5rem;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: var(--accent);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-icon svg { width: 20px; height: 20px; }
+  .logo-text h1 { font-size: 18px; font-weight: 700; letter-spacing: -.3px; }
+  .logo-text p  { font-size: 12px; color: var(--muted); }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--subtle);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+  }
+  .card-header svg { width: 14px; height: 14px; opacity: .7; }
+
+  /* ── Config row ── */
+  .config-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    padding: 14px 16px;
+    align-items: end;
+  }
+  @media (max-width: 540px) { .config-row { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field-row { display: grid; grid-template-columns: 1fr 130px; gap: 10px; }
+  @media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }
+
+  label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+
+  input[type="text"], select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 9px 12px;
+    width: 100%;
+    outline: none;
+    transition: border-color .15s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  input[type="text"]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,247,.12); }
+
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '';
+    position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--muted);
+    pointer-events: none;
+  }
+  select { cursor: pointer; padding-right: 28px; }
+  select option { background: var(--surface2); color: var(--text); }
+
+  /* ── Textarea ── */
+  .textarea-wrap { position: relative; }
+  textarea {
+    width: 100%; min-height: 360px;
+    background: var(--surface2);
+    border: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+    padding: 14px 16px;
+    resize: vertical;
+    outline: none;
+    display: block;
+    tab-size: 2;
+  }
+  textarea::placeholder { color: var(--muted); }
+  textarea:focus { background: #192030; }
+
+  /* ── Line numbers ── */
+  .line-nums {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 42px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 14px 0;
+    pointer-events: none;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .line-nums span {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.65;
+    width: 100%;
+    text-align: right;
+    padding-right: 8px;
+    opacity: .5;
+  }
+
+  /* ── Stats bar ── */
+  .stats-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .stat {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--muted);
+  }
+  .stat svg { width: 12px; height: 12px; }
+  .stat-val {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 48px;
+  }
+  .stat-val.pulse { color: var(--accent); }
+
+  /* ── Size meter ── */
+  .meter-wrap {
+    padding: 0 16px 14px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .meter-row { display: flex; justify-content: space-between; align-items: center; }
+  .meter-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  .meter-size  { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--green); }
+  .meter-bar   { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .meter-fill  {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    border-radius: 99px;
+    transition: width .25s, background .25s;
+  }
+  .meter-fill.warn  { background: var(--yellow); }
+  .meter-fill.danger { background: var(--red); }
+
+  /* ── Action row ── */
+  .action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    align-items: center;
+    justify-content: space-between;
+  }
+  .filename-preview {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--subtle);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 260px;
+  }
+  .filename-preview em { color: var(--accent); font-style: normal; }
+
+  .btn-group { display: flex; gap: 8px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+    font-family: var(--sans);
+  }
+  .btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover  { background: var(--accent-dk); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79,142,247,.3); }
+  .btn-primary:active { transform: translateY(0); box-shadow: none; }
+
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--subtle);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover  { border-color: var(--border2); color: var(--text); }
+  .btn-ghost:active { transform: scale(.98); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid rgba(248,113,113,.25);
+  }
+  .btn-danger:hover { background: rgba(248,113,113,.08); border-color: var(--red); }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--surface2); border: 1px solid var(--border2);
+    padding: 10px 18px; border-radius: 8px;
+    font-size: 13px; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+    opacity: 0; transition: all .25s;
+    pointer-events: none; z-index: 1000;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast svg  { width: 15px; height: 15px; color: var(--green); }
+
+  /* ── Drop zone highlight ── */
+  .drag-over textarea { background: #1a2540 !important; }
+  .drag-badge {
+    display: none;
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    background: rgba(79,142,247,.12); border: 1px dashed var(--accent);
+    border-radius: 10px; padding: 24px 40px;
+    font-size: 15px; color: var(--accent); font-weight: 600;
+    pointer-events: none; text-align: center; gap: 10px;
+    flex-direction: column; align-items: center;
+  }
+  .drag-over .drag-badge { display: flex; }
+  .drag-badge svg { width: 28px; height: 28px; }
+
+  /* ── Footer ── */
+  footer { text-align: center; font-size: 11px; color: var(--muted); padding-top: .5rem; }
+
+  /* ── Syntax hint badge ── */
+  .lang-badge {
+    position: absolute; top: 10px; right: 12px;
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    color: var(--accent); background: rgba(79,142,247,.12);
+    border: 1px solid rgba(79,142,247,.2);
+    padding: 2px 8px; border-radius: 4px; letter-spacing: .5px;
+    text-transform: uppercase; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Header -->
+  <header>
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <h1>FileForge</h1>
+      <p>Universal file generator — paste, configure, download</p>
+    </div>
+  </header>
+
+  <!-- Config Card -->
+  <div class="card">
+    <div class="card-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+      </svg>
+      File Configuration
+    </div>
+    <div style="padding: 14px 16px;">
+      <div class="field-row">
+        <div class="field">
+          <label for="fname">File Name</label>
+          <input type="text" id="fname" placeholder="my-file" spellcheck="false" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="fext">Extension</label>
+          <div class="select-wrap">
+            <select id="fext">
+              <option value=".html">.html</option>
+              <option value=".css">.css</option>
+              <option value=".js">.js</option>
+              <option value=".ts">.ts</option>
+              <option value=".py">.py</option>
+              <option value=".json">.json</option>
+              <option value=".md">.md</option>
+              <option value=".txt" selected>.txt</option>
+              <option value=".xml">.xml</option>
+              <option value=".yaml">.yaml</option>
+              <option value=".sh">.sh</option>
+              <option value=".sql">.sql</option>
+              <option value=".csv">.csv</option>
+              <option value=".jsx">.jsx</option>
+              <option value=".tsx">.tsx</option>
+              <option value=".vue">.vue</option>
+              <option value=".rs">.rs</option>
+              <option value=".go">.go</option>
+              <option value=".java">.java</option>
+              <option value=".c">.c</option>
+              <option value=".cpp">.cpp</option>
+              <option value=".rb">.rb</option>
+              <option value=".php">.php</option>
+              <option value=".swift">.swift</option>
+              <option value=".kt">.kt</option>
+              <option value=".env">.env</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editor Card -->
+  <div class="card" style="flex:1">
+    <div class="card-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+      </svg>
+      Content Editor
+      <span id="lang-badge" class="lang-badge" style="margin-left:auto">txt</span>
+    </div>
+
+    <div class="textarea-wrap" id="editor-wrap">
+      <textarea
+        id="content"
+        placeholder="Paste or type your content here…&#10;&#10;Supports any text-based format: code, markup, data, config files, prose, etc.&#10;&#10;Tip: You can also drag & drop a text file onto this area."
+        spellcheck="false"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+      ></textarea>
+      <div class="drag-badge" id="drag-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Drop file to load content
+      </div>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="stats-bar">
+      <div class="stat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+        Lines
+        <span class="stat-val" id="stat-lines">0</span>
+      </div>
+      <div class="stat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+        Words
+        <span class="stat-val" id="stat-words">0</span>
+      </div>
+      <div class="stat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>
+        Chars
+        <span class="stat-val" id="stat-chars">0</span>
+      </div>
+      <div class="stat" style="margin-left:auto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        Size
+        <span class="stat-val" id="stat-size" style="color:var(--green)">0 B</span>
+      </div>
+    </div>
+
+    <!-- Size meter -->
+    <div class="meter-wrap">
+      <div class="meter-row">
+        <span class="meter-label">File size</span>
+        <span class="meter-size" id="meter-label-size">0 B</span>
+      </div>
+      <div class="meter-bar"><div class="meter-fill" id="meter-fill"></div></div>
+    </div>
+
+    <!-- Action row -->
+    <div class="action-row">
+      <div class="filename-preview" id="fname-preview"><em>my-file</em>.txt</div>
+      <div class="btn-group">
+        <button class="btn btn-ghost" onclick="handleClear()" title="Clear content">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Clear
+        </button>
+        <button class="btn btn-ghost" onclick="handleCopy()" title="Copy to clipboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>
+        <button class="btn btn-primary" onclick="handleDownload()" id="dl-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer>FileForge — 100% local, zero dependencies, nothing leaves your browser.</footer>
+</div>
+
+<!-- Toast -->
+<div id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg">File downloaded!</span>
+</div>
+
+<script>
+const contentEl = document.getElementById('content');
+const fnameEl   = document.getElementById('fname');
+const fextEl    = document.getElementById('fext');
+const previewEl = document.getElementById('fname-preview');
+const langBadge = document.getElementById('lang-badge');
+const meterFill = document.getElementById('meter-fill');
+const meterSize = document.getElementById('meter-label-size');
+const editorWrap = document.getElementById('editor-wrap');
+const dragBadge  = document.getElementById('drag-badge');
+
+/* ── MIME type map for download ── */
+const MIME = {
+  '.html':'.html', '.css':'text/css', '.js':'application/javascript',
+  '.ts':'application/typescript', '.py':'text/x-python', '.json':'application/json',
+  '.md':'text/markdown', '.txt':'text/plain', '.xml':'application/xml',
+  '.yaml':'application/x-yaml', '.sh':'application/x-sh', '.sql':'application/sql',
+  '.csv':'text/csv', '.jsx':'text/jsx', '.tsx':'text/tsx', '.vue':'text/vue',
+  '.rs':'text/x-rust', '.go':'text/x-go', '.java':'text/x-java', '.c':'text/x-c',
+  '.cpp':'text/x-c++', '.rb':'application/x-ruby', '.php':'application/x-php',
+  '.swift':'text/x-swift', '.kt':'text/x-kotlin', '.env':'text/plain'
+};
+
+/* ── Real-time stats ── */
+function updateStats() {
+  const txt    = contentEl.value;
+  const bytes  = new TextEncoder().encode(txt).length;
+  const lines  = txt ? txt.split('\n').length : 0;
+  const words  = txt.trim() ? txt.trim().split(/\s+/).length : 0;
+  const chars  = txt.length;
+
+  document.getElementById('stat-lines').textContent = lines.toLocaleString();
+  document.getElementById('stat-words').textContent = words.toLocaleString();
+  document.getElementById('stat-chars').textContent = chars.toLocaleString();
+
+  const sizeStr = formatSize(bytes);
+  document.getElementById('stat-size').textContent = sizeStr;
+  meterSize.textContent = sizeStr;
+
+  /* Meter: scale at 1 MB cap */
+  const MAX_BYTES = 1_048_576;
+  const pct = Math.min((bytes / MAX_BYTES) * 100, 100);
+  meterFill.style.width = pct + '%';
+  meterFill.className = 'meter-fill' + (pct > 80 ? ' danger' : pct > 50 ? ' warn' : '');
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+  return (bytes / 1048576).toFixed(2) + ' MB';
+}
+
+/* ── Filename preview & badge ── */
+function updatePreview() {
+  const name = fnameEl.value.trim() || 'untitled';
+  const ext  = fextEl.value;
+  previewEl.innerHTML = `<em>${escHtml(name)}</em>${ext}`;
+  langBadge.textContent = ext.replace('.','');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ── Download ── */
+function handleDownload() {
+  const text = contentEl.value;
+  const name = (fnameEl.value.trim() || 'untitled') + fextEl.value;
+  const mime = MIME[fextEl.value] || 'text/plain';
+  const blob = new Blob([text], { type: mime + ';charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Downloaded: ' + name);
+  /* Button feedback */
+  const btn = document.getElementById('dl-btn');
+  btn.textContent = '✓ Saved!';
+  btn.style.background = '#16a34a';
+  setTimeout(() => {
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download`;
+    btn.style.background = '';
+  }, 2000);
+}
+
+/* ── Copy ── */
+async function handleCopy() {
+  if (!contentEl.value) { showToast('Nothing to copy'); return; }
+  try {
+    await navigator.clipboard.writeText(contentEl.value);
+    showToast('Copied to clipboard!');
+  } catch {
+    contentEl.select(); document.execCommand('copy');
+    showToast('Copied!');
+  }
+}
+
+/* ── Clear ── */
+function handleClear() {
+  if (!contentEl.value) return;
+  if (confirm('Clear all content?')) {
+    contentEl.value = '';
+    updateStats();
+    contentEl.focus();
+  }
+}
+
+/* ── Toast ── */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ── Tab key support ── */
+contentEl.addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  e.preventDefault();
+  const start = contentEl.selectionStart;
+  const end   = contentEl.selectionEnd;
+  const spaces = '  ';
+  if (start === end) {
+    contentEl.value = contentEl.value.slice(0, start) + spaces + contentEl.value.slice(end);
+    contentEl.selectionStart = contentEl.selectionEnd = start + spaces.length;
+  } else {
+    /* indent selected lines */
+    const lines  = contentEl.value.split('\n');
+    let pos = 0, startLine = 0, endLine = 0;
+    for (let i = 0; i < lines.length; i++) {
+      if (pos + lines[i].length >= start && startLine === 0) startLine = i;
+      if (pos + lines[i].length >= end) { endLine = i; break; }
+      pos += lines[i].length + 1;
+    }
+    for (let i = startLine; i <= endLine; i++) lines[i] = spaces + lines[i];
+    contentEl.value = lines.join('\n');
+  }
+  updateStats();
+});
+
+/* ── Drag & drop file ── */
+contentEl.addEventListener('dragover', e => { e.preventDefault(); editorWrap.classList.add('drag-over'); });
+contentEl.addEventListener('dragleave', () => editorWrap.classList.remove('drag-over'));
+contentEl.addEventListener('drop', e => {
+  e.preventDefault();
+  editorWrap.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  /* auto-fill filename & extension */
+  const dotIdx = file.name.lastIndexOf('.');
+  if (dotIdx > 0) {
+    const base = file.name.slice(0, dotIdx);
+    const ext  = file.name.slice(dotIdx);
+    fnameEl.value = base;
+    const opt = [...fextEl.options].find(o => o.value === ext);
+    if (opt) fextEl.value = ext;
+  } else {
+    fnameEl.value = file.name;
+  }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    contentEl.value = ev.target.result;
+    updateStats(); updatePreview();
+    showToast('Loaded: ' + file.name);
+  };
+  reader.readAsText(file);
+});
+
+/* ── Keyboard shortcut: Ctrl/Cmd+S → download ── */
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handleDownload(); }
+});
+
+/* ── Listeners ── */
+contentEl.addEventListener('input', updateStats);
+fnameEl.addEventListener('input', updatePreview);
+fextEl.addEventListener('change', updatePreview);
+
+/* ── Init ── */
+updateStats();
+updatePreview();
+fnameEl.value = 'my-file';
+</script>
+</body>
+</html>
