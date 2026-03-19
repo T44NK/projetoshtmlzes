@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BACTERIUM — Ultimate Microbial Simulator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+:root{
+--bg:#020409;
+--panel:#070d1a;
+--panel2:#0a1220;
+--border:#0d2040;
+--accent:#00e5ff;
+--accent2:#00ff88;
+--accent3:#ff6b35;
+--accent4:#b44aff;
+--warn:#ffcc00;
+--danger:#ff2244;
+--text:#c8e0ff;
+--text2:#6a8fbb;
+--glow:0 0 12px rgba(0,229,255,0.4);
+--glow2:0 0 12px rgba(0,255,136,0.4);
+}
+
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Share Tech Mono',monospace;color:var(--text);}
+
+#app{display:grid;grid-template-columns:280px 1fr 260px;grid-template-rows:52px 1fr 160px;width:100vw;height:100vh;gap:0;}
+
+#topbar{grid-column:1/-1;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:20px;z-index:10;}
+
+#logo{font-family:'Orbitron',monospace;font-weight:900;font-size:18px;color:var(--accent);letter-spacing:4px;text-shadow:var(--glow);flex-shrink:0;}
+#logo span{color:var(--accent2);}
+
+.topstat{display:flex;flex-direction:column;gap:2px;padding:0 14px;border-left:1px solid var(--border);}
+.topstat-label{font-size:9px;color:var(--text2);letter-spacing:2px;text-transform:uppercase;}
+.topstat-val{font-size:14px;color:var(--accent);font-weight:bold;}
+
+#simtime{margin-left:auto;font-size:11px;color:var(--text2);}
+#simpause{margin-left:12px;background:transparent;border:1px solid var(--accent);color:var(--accent);padding:4px 14px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;transition:all 0.2s;}
+#simpause:hover{background:var(--accent);color:var(--bg);}
+#simspeed{margin-left:8px;background:transparent;border:1px solid var(--border);color:var(--text2);padding:4px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:11px;}
+
+#leftpanel{background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;gap:0;}
+#rightpanel{background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;}
+#bottompanel{grid-column:1/-1;background:var(--panel);border-top:1px solid var(--border);display:flex;gap:0;overflow:hidden;}
+
+.section{border-bottom:1px solid var(--border);padding:10px 12px;}
+.section-title{font-family:'Orbitron',monospace;font-size:9px;color:var(--accent2);letter-spacing:3px;margin-bottom:8px;text-transform:uppercase;}
+
+#canvas-wrap{position:relative;background:#000;overflow:hidden;}
+#simcanvas{display:block;cursor:crosshair;}
+#overlay-canvas{position:absolute;top:0;left:0;pointer-events:none;}
+
+.btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--border);color:var(--text2);padding:5px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;transition:all 0.15s;width:100%;margin-bottom:4px;}
+.btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,229,255,0.05);}
+.btn.danger{border-color:#331020;}
+.btn.danger:hover{border-color:var(--danger);color:var(--danger);background:rgba(255,34,68,0.05);}
+.btn.success:hover{border-color:var(--accent2);color:var(--accent2);}
+.btn.warn:hover{border-color:var(--warn);color:var(--warn);}
+.btn.purple:hover{border-color:var(--accent4);color:var(--accent4);}
+.btn.active{border-color:var(--accent);color:var(--accent);background:rgba(0,229,255,0.1);}
+
+.btn-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+.slider-wrap{margin-bottom:8px;}
+.slider-label{display:flex;justify-content:space-between;font-size:9px;color:var(--text2);margin-bottom:3px;}
+input[type=range]{width:100%;appearance:none;height:2px;background:var(--border);outline:none;}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:10px;height:10px;border-radius:50%;background:var(--accent);cursor:pointer;}
+
+.select{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:4px 8px;font-family:'Share Tech Mono',monospace;font-size:10px;width:100%;margin-bottom:6px;}
+
+.info-row{display:flex;justify-content:space-between;font-size:10px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.03);}
+.info-key{color:var(--text2);}
+.info-val{color:var(--accent);}
+.info-val.green{color:var(--accent2);}
+.info-val.red{color:var(--danger);}
+.info-val.yellow{color:var(--warn);}
+.info-val.purple{color:var(--accent4);}
+
+#selected-info{padding:10px 12px;flex:1;}
+#no-selection{color:var(--text2);font-size:10px;text-align:center;padding:20px 0;}
+
+#chart-wrap{flex:1;padding:10px 12px;}
+#popChart{width:100%;height:80px;}
+
+#logpanel{flex:1;overflow-y:auto;padding:8px 12px;font-size:10px;display:flex;flex-direction:column;gap:2px;}
+.log-entry{display:flex;gap:8px;color:var(--text2);}
+.log-time{color:var(--border);flex-shrink:0;}
+.log-msg{color:var(--text2);}
+.log-msg.info{color:var(--accent);}
+.log-msg.warn{color:var(--warn);}
+.log-msg.danger{color:var(--danger);}
+.log-msg.success{color:var(--accent2);}
+.log-msg.purple{color:var(--accent4);}
+
+#envpanel{width:240px;border-right:1px solid var(--border);padding:10px 12px;overflow-y:auto;flex-shrink:0;}
+#chartpanel{flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:6px;}
+.chart-label{font-size:9px;color:var(--text2);letter-spacing:2px;margin-bottom:2px;}
+
+canvas.minichart{width:100%;height:40px;background:rgba(0,0,0,0.3);border:1px solid var(--border);}
+
+.dna-display{font-family:'Share Tech Mono',monospace;font-size:9px;word-break:break-all;line-height:1.6;padding:6px;background:rgba(0,0,0,0.3);border:1px solid var(--border);max-height:60px;overflow:hidden;}
+.dna-A{color:#ff6b6b;} .dna-T{color:#ffd93d;} .dna-G{color:#6bcb77;} .dna-C{color:#4d96ff;}
+
+.badge{display:inline-block;padding:1px 6px;font-size:8px;border-radius:2px;letter-spacing:1px;margin-right:3px;margin-bottom:2px;}
+.badge-r{background:rgba(255,34,68,0.15);border:1px solid var(--danger);color:var(--danger);}
+.badge-g{background:rgba(0,255,136,0.1);border:1px solid var(--accent2);color:var(--accent2);}
+.badge-b{background:rgba(0,229,255,0.1);border:1px solid var(--accent);color:var(--accent);}
+.badge-p{background:rgba(180,74,255,0.1);border:1px solid var(--accent4);color:var(--accent4);}
+.badge-y{background:rgba(255,204,0,0.1);border:1px solid var(--warn);color:var(--warn);}
+
+#tooltip{position:fixed;background:rgba(7,13,26,0.95);border:1px solid var(--border);padding:8px 10px;font-size:10px;pointer-events:none;display:none;z-index:1000;min-width:140px;}
+
+.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:3px;}
+.progress-fill{height:100%;border-radius:2px;transition:width 0.3s;}
+
+.pulse{animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+.scanline{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);}
+
+#mode-indicator{position:absolute;top:8px;left:8px;font-size:9px;color:var(--accent2);letter-spacing:2px;background:rgba(0,0,0,0.7);padding:3px 8px;border:1px solid var(--accent2);}
+
+#nutrient-overlay{position:absolute;top:0;left:0;pointer-events:none;opacity:0.18;}
+
+.color-swatch{width:14px;height:14px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);display:inline-block;cursor:pointer;margin-right:4px;vertical-align:middle;}
+
+#colony-list{max-height:120px;overflow-y:auto;}
+.colony-item{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:9px;border-bottom:1px solid rgba(255,255,255,0.03);cursor:pointer;}
+.colony-item:hover{background:rgba(0,229,255,0.05);}
+
+#resistance-bars{margin-top:4px;}
+.res-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:9px;}
+.res-name{color:var(--text2);width:80px;flex-shrink:0;}
+.res-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.res-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent2),var(--warn));}
+
+.scrollbar::-webkit-scrollbar{width:4px;}
+.scrollbar::-webkit-scrollbar-track{background:transparent;}
+.scrollbar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+#leftpanel,.scrollbar{scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+<div id="topbar">
+  <div id="logo">BACT<span>ERIUM</span></div>
+  <div class="topstat"><span class="topstat-label">Population</span><span class="topstat-val" id="stat-pop">0</span></div>
+  <div class="topstat"><span class="topstat-label">Generation</span><span class="topstat-val" id="stat-gen">0</span></div>
+  <div class="topstat"><span class="topstat-label">Births</span><span class="topstat-val" id="stat-births" style="color:var(--accent2)">0</span></div>
+  <div class="topstat"><span class="topstat-label">Deaths</span><span class="topstat-val" id="stat-deaths" style="color:var(--danger)">0</span></div>
+  <div class="topstat"><span class="topstat-label">Mutations</span><span class="topstat-val" id="stat-mut" style="color:var(--accent4)">0</span></div>
+  <div class="topstat"><span class="topstat-label">Nutrients</span><span class="topstat-val" id="stat-nut">100%</span></div>
+  <div class="topstat"><span class="topstat-label">Biofilm</span><span class="topstat-val" id="stat-bio" style="color:var(--accent4)">0%</span></div>
+  <div id="simtime">T+<span id="sim-tick">00000</span></div>
+  <button id="simpause" onclick="togglePause()">❚❚ PAUSE</button>
+  <select id="simspeed" class="select" style="width:auto;margin:0;" onchange="setSpeed(this.value)">
+    <option value="0.25">0.25×</option>
+    <option value="0.5">0.5×</option>
+    <option value="1" selected>1×</option>
+    <option value="2">2×</option>
+    <option value="5">5×</option>
+    <option value="10">10×</option>
+  </select>
+</div>
+
+<div id="leftpanel" class="scrollbar">
+
+  <div class="section">
+    <div class="section-title">🖱 Interaction Mode</div>
+    <button class="btn active" id="mode-btn-spawn" onclick="setMode('spawn')"><span class="btn-dot"></span>SPAWN BACTERIA</button>
+    <button class="btn" id="mode-btn-kill" onclick="setMode('kill')"><span class="btn-dot"></span>KILL / REMOVE</button>
+    <button class="btn" id="mode-btn-revive" onclick="setMode('revive')"><span class="btn-dot"></span>REVIVE DEAD</button>
+    <button class="btn" id="mode-btn-select" onclick="setMode('select')"><span class="btn-dot"></span>SELECT / INSPECT</button>
+    <button class="btn" id="mode-btn-mutate" onclick="setMode('mutate')"><span class="btn-dot"></span>FORCE MUTATE</button>
+    <button class="btn" id="mode-btn-inject" onclick="setMode('inject')"><span class="btn-dot"></span>INJECT NUTRIENT</button>
+    <button class="btn" id="mode-btn-toxic" onclick="setMode('toxic')"><span class="btn-dot"></span>INJECT TOXIN</button>
+    <button class="btn" id="mode-btn-move" onclick="setMode('move')"><span class="btn-dot"></span>MOVE BACTERIA</button>
+  </div>
+
+  <div class="section">
+    <div class="section-title">⚗ Spawn Settings</div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>Species</span><span id="sl-species-val">E. coli</span></div>
+      <select class="select" id="spawn-species" onchange="updateSpawnSpecies()">
+        <option value="ecoli">E. coli</option>
+        <option value="staph">S. aureus</option>
+        <option value="strepto">S. pyogenes</option>
+        <option value="bacillus">B. subtilis</option>
+        <option value="vibrio">V. cholerae</option>
+        <option value="pseudo">P. aeruginosa</option>
+        <option value="custom">Custom</option>
+      </select>
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>Spawn Count</span><span id="sl-count-val">1</span></div>
+      <input type="range" min="1" max="50" value="1" oninput="document.getElementById('sl-count-val').textContent=this.value;spawnCount=+this.value;">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>Initial Energy</span><span id="sl-energy-val">80%</span></div>
+      <input type="range" min="10" max="100" value="80" oninput="document.getElementById('sl-energy-val').textContent=this.value+'%';spawnEnergy=+this.value;">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>Initial Mutation Rate</span><span id="sl-mutrate-val">2%</span></div>
+      <input type="range" min="0" max="100" value="2" oninput="document.getElementById('sl-mutrate-val').textContent=this.value+'%';spawnMutRate=+this.value/100;">
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🧬 Mass Actions</div>
+    <button class="btn success" onclick="spawnColony()"><span class="btn-dot"></span>SPAWN COLONY (25)</button>
+    <button class="btn success" onclick="spawnRandom()"><span class="btn-dot"></span>SEED RANDOM (50)</button>
+    <button class="btn warn" onclick="massKill(0.5)"><span class="btn-dot"></span>ANTIBIOTIC WAVE (50%)</button>
+    <button class="btn warn" onclick="massKill(0.9)"><span class="btn-dot"></span>ANTIBIOTIC SURGE (90%)</button>
+    <button class="btn danger" onclick="massKill(1)"><span class="btn-dot"></span>EXTINCTION EVENT</button>
+    <button class="btn purple" onclick="massMutate()"><span class="btn-dot"></span>RADIATION BURST</button>
+    <button class="btn purple" onclick="evolutionPressure()"><span class="btn-dot"></span>EVOLUTION PRESSURE</button>
+    <button class="btn" onclick="reviveAll()"><span class="btn-dot"></span>REVIVE ALL DEAD</button>
+    <button class="btn danger" onclick="clearDead()"><span class="btn-dot"></span>CLEAR CORPSES</button>
+    <button class="btn warn" onclick="resetAll()"><span class="btn-dot"></span>RESET SIMULATION</button>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🌡 Environment</div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>Temperature</span><span id="sl-temp-val">37°C</span></div>
+      <input type="range" min="4" max="80" value="37" oninput="setEnvParam('temperature',+this.value);document.getElementById('sl-temp-val').textContent=this.value+'°C';">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>pH Level</span><span id="sl-ph-val">7.0</span></div>
+      <input type="range" min="10" max="140" value="70" oninput="setEnvParam('ph',+this.value/10);document.getElementById('sl-ph-val').textContent=(+this.value/10).toFixed(1);">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>Oxygen Level</span><span id="sl-o2-val">21%</span></div>
+      <input type="range" min="0" max="100" value="21" oninput="setEnvParam('oxygen',+this.value);document.getElementById('sl-o2-val').textContent=this.value+'%';">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>Nutrient Density</span><span id="sl-nutr-val">50%</span></div>
+      <input type="range" min="0" max="100" value="50" oninput="setEnvParam('nutrientBase',+this.value/100);document.getElementById('sl-nutr-val').textContent=this.value+'%';">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>Salinity</span><span id="sl-sal-val">0.9%</span></div>
+      <input type="range" min="0" max="200" value="9" oninput="setEnvParam('salinity',+this.value/10);document.getElementById('sl-sal-val').textContent=(+this.value/10).toFixed(1)+'%';">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>UV Radiation</span><span id="sl-uv-val">0%</span></div>
+      <input type="range" min="0" max="100" value="0" oninput="setEnvParam('uvRad',+this.value/100);document.getElementById('sl-uv-val').textContent=this.value+'%';">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-label"><span>Antibiotic Conc.</span><span id="sl-ab-val">0%</span></div>
+      <input type="range" min="0" max="100" value="0" oninput="setEnvParam('antibiotic',+this.value/100);document.getElementById('sl-ab-val').textContent=this.value+'%';">
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">👁 Visualization</div>
+    <button class="btn" id="vis-energy" onclick="toggleVis('energy')"><span class="btn-dot"></span>ENERGY OVERLAY</button>
+    <button class="btn" id="vis-nutrient" onclick="toggleVis('nutrient')"><span class="btn-dot"></span>NUTRIENT MAP</button>
+    <button class="btn" id="vis-genome" onclick="toggleVis('genome')"><span class="btn-dot"></span>GENOME COLOR</button>
+    <button class="btn" id="vis-stress" onclick="toggleVis('stress')"><span class="btn-dot"></span>STRESS HEATMAP</button>
+    <button class="btn" id="vis-species" onclick="toggleVis('species')"><span class="btn-dot"></span>SPECIES COLOR</button>
+    <button class="btn" id="vis-flagella" onclick="toggleVis('flagella')"><span class="btn-dot"></span>FLAGELLA</button>
+    <button class="btn" id="vis-trails" onclick="toggleVis('trails')"><span class="btn-dot"></span>MOTION TRAILS</button>
+    <button class="btn" id="vis-biofilm" onclick="toggleVis('biofilm')"><span class="btn-dot"></span>BIOFILM LAYER</button>
+    <button class="btn" id="vis-labels" onclick="toggleVis('labels')"><span class="btn-dot"></span>ID LABELS</button>
+  </div>
+
+</div>
+
+<div id="canvas-wrap">
+  <canvas id="simcanvas"></canvas>
+  <canvas id="overlay-canvas"></canvas>
+  <canvas id="nutrient-overlay"></canvas>
+  <div class="scanline"></div>
+  <div id="mode-indicator">MODE: SPAWN</div>
+</div>
+
+<div id="rightpanel" class="scrollbar">
+
+  <div class="section">
+    <div class="section-title">🔬 Selected Cell</div>
+    <div id="selected-info">
+      <div id="no-selection">Click a bacterium<br>to inspect</div>
+      <div id="cell-detail" style="display:none">
+        <div class="info-row"><span class="info-key">ID</span><span class="info-val" id="ci-id">-</span></div>
+        <div class="info-row"><span class="info-key">Species</span><span class="info-val" id="ci-species">-</span></div>
+        <div class="info-row"><span class="info-key">Age</span><span class="info-val" id="ci-age">-</span></div>
+        <div class="info-row"><span class="info-key">Generation</span><span class="info-val" id="ci-gen">-</span></div>
+        <div class="info-row"><span class="info-key">Energy</span><span class="info-val" id="ci-energy">-</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="ci-energy-bar" style="background:var(--accent2);"></div></div>
+        <div class="info-row" style="margin-top:4px"><span class="info-key">Health</span><span class="info-val" id="ci-health">-</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="ci-health-bar" style="background:var(--accent);"></div></div>
+        <div class="info-row" style="margin-top:4px"><span class="info-key">Size</span><span class="info-val" id="ci-size">-</span></div>
+        <div class="info-row"><span class="info-key">Speed</span><span class="info-val" id="ci-speed">-</span></div>
+        <div class="info-row"><span class="info-key">Division %</span><span class="info-val" id="ci-div">-</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="ci-div-bar" style="background:var(--accent4);"></div></div>
+        <div class="info-row" style="margin-top:4px"><span class="info-key">Mutation Rate</span><span class="info-val purple" id="ci-mrate">-</span></div>
+        <div class="info-row"><span class="info-key">Fitness</span><span class="info-val green" id="ci-fitness">-</span></div>
+        <div class="info-row"><span class="info-key">Offspring</span><span class="info-val" id="ci-offspring">-</span></div>
+        <div class="info-row"><span class="info-key">Ancestors</span><span class="info-val" id="ci-ancestors">-</span></div>
+        <div class="info-row"><span class="info-key">Status</span><span class="info-val" id="ci-status">-</span></div>
+        <div style="margin-top:8px;font-size:9px;color:var(--text2);margin-bottom:3px;">GENOME</div>
+        <div class="dna-display" id="ci-dna"></div>
+        <div style="margin-top:6px;font-size:9px;color:var(--text2);margin-bottom:3px;">TRAITS</div>
+        <div id="ci-traits"></div>
+        <div style="margin-top:6px;font-size:9px;color:var(--text2);margin-bottom:3px;">RESISTANCES</div>
+        <div id="resistance-bars">
+          <div class="res-row"><span class="res-name">Antibiotic</span><div class="res-bar"><div class="res-fill" id="res-antibiotic" style="width:0%"></div></div></div>
+          <div class="res-row"><span class="res-name">Heat</span><div class="res-bar"><div class="res-fill" id="res-heat" style="width:0%"></div></div></div>
+          <div class="res-row"><span class="res-name">UV</span><div class="res-bar"><div class="res-fill" id="res-uv" style="width:0%"></div></div></div>
+          <div class="res-row"><span class="res-name">pH</span><div class="res-bar"><div class="res-fill" id="res-ph" style="width:0%"></div></div></div>
+          <div class="res-row"><span class="res-name">Osmotic</span><div class="res-bar"><div class="res-fill" id="res-osm" style="width:0%"></div></div></div>
+        </div>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;">
+          <button class="btn warn" onclick="killSelected()"><span class="btn-dot"></span>KILL THIS CELL</button>
+          <button class="btn success" onclick="reviveSelected()"><span class="btn-dot"></span>REVIVE CELL</button>
+          <button class="btn purple" onclick="mutateSelected()"><span class="btn-dot"></span>FORCE MUTATE</button>
+          <button class="btn" onclick="cloneSelected()"><span class="btn-dot"></span>CLONE CELL</button>
+          <button class="btn" onclick="isolateSelected()"><span class="btn-dot"></span>ISOLATE LINEAGE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📊 Population Graph</div>
+    <div id="chart-wrap">
+      <canvas id="popChart" style="width:100%;height:80px;"></canvas>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🧫 Colonies</div>
+    <div id="colony-list"></div>
+    <button class="btn" style="margin-top:4px" onclick="createNamedColony()"><span class="btn-dot"></span>DEFINE COLONY</button>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📡 Species Distribution</div>
+    <canvas id="speciesChart" style="width:100%;height:60px;"></canvas>
+    <div id="species-legend" style="margin-top:6px;font-size:9px;display:flex;flex-wrap:wrap;gap:4px;"></div>
+  </div>
+
+</div>
+
+<div id="bottompanel">
+  <div id="envpanel" class="scrollbar">
+    <div class="section-title">🌍 Environment Status</div>
+    <div class="info-row"><span class="info-key">Temperature</span><span class="info-val" id="env-temp">37°C</span></div>
+    <div class="info-row"><span class="info-key">pH</span><span class="info-val" id="env-ph">7.0</span></div>
+    <div class="info-row"><span class="info-key">O2</span><span class="info-val" id="env-o2">21%</span></div>
+    <div class="info-row"><span class="info-key">Nutrients</span><span class="info-val" id="env-nut">100%</span></div>
+    <div class="info-row"><span class="info-key">Salinity</span><span class="info-val" id="env-sal">0.9%</span></div>
+    <div class="info-row"><span class="info-key">UV Rad</span><span class="info-val" id="env-uv">0%</span></div>
+    <div class="info-row"><span class="info-key">Antibiotic</span><span class="info-val" id="env-ab">0%</span></div>
+    <div class="info-row"><span class="info-key">Toxin</span><span class="info-val" id="env-tox">0%</span></div>
+    <div class="info-row"><span class="info-key">Stress Index</span><span class="info-val red" id="env-stress">LOW</span></div>
+    <div style="margin-top:10px">
+      <div class="section-title">📈 Fitness Avg</div>
+      <div class="progress-bar" style="height:6px"><div class="progress-fill" id="fitness-bar" style="background:var(--accent2);width:50%"></div></div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="section-title">🦠 Biofilm Coverage</div>
+      <div class="progress-bar" style="height:6px"><div class="progress-fill" id="biofilm-bar" style="background:var(--accent4);width:0%"></div></div>
+    </div>
+  </div>
+
+  <div id="chartpanel">
+    <div class="chart-label">BIRTHS / DEATHS PER TICK</div>
+    <canvas class="minichart" id="bdChart"></canvas>
+    <div class="chart-label">AVERAGE ENERGY</div>
+    <canvas class="minichart" id="energyChart"></canvas>
+    <div class="chart-label">MUTATION EVENTS</div>
+    <canvas class="minichart" id="mutChart"></canvas>
+  </div>
+
+  <div id="logpanel" class="scrollbar" style="max-width:340px;border-left:1px solid var(--border);">
+    <div style="font-family:'Orbitron',monospace;font-size:9px;color:var(--accent2);letter-spacing:3px;margin-bottom:6px;">EVENT LOG</div>
+  </div>
+</div>
+
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+const simcanvas = document.getElementById('simcanvas');
+const ctx = simcanvas.getContext('2d');
+const overlayCanvas = document.getElementById('overlay-canvas');
+const octx = overlayCanvas.getContext('2d');
+const nutrientCanvas = document.getElementById('nutrient-overlay');
+const nctx = nutrientCanvas.getContext('2d');
+const canvasWrap = document.getElementById('canvas-wrap');
+
+let W, H;
+function resizeCanvas(){
+  const r = canvasWrap.getBoundingClientRect();
+  W = simcanvas.width = overlayCanvas.width = nutrientCanvas.width = r.width;
+  H = simcanvas.height = overlayCanvas.height = nutrientCanvas.height = r.height;
+  nutrientCanvas.style.width = W+'px';
+  nutrientCanvas.style.height = H+'px';
+  nutrientGrid = new Float32Array(NGRID*NGRID);
+  initNutrients();
+}
+window.addEventListener('resize', resizeCanvas);
+
+const NGRID = 64;
+let nutrientGrid;
+
+const SPECIES_DATA = {
+  ecoli:{name:'E. coli',color:'#00e5ff',shape:'rod',speed:1.2,divTime:600,size:4,motile:true,aerobic:true,gramPos:false},
+  staph:{name:'S. aureus',color:'#ffcc00',shape:'coccus',speed:0.3,divTime:900,size:5,motile:false,aerobic:true,gramPos:true},
+  strepto:{name:'S. pyogenes',color:'#ff6b35',shape:'chain',speed:0.2,divTime:1000,size:4,motile:false,aerobic:false,gramPos:true},
+  bacillus:{name:'B. subtilis',color:'#6bcb77',shape:'rod',speed:0.8,divTime:700,size:6,motile:true,aerobic:true,gramPos:true},
+  vibrio:{name:'V. cholerae',color:'#b44aff',shape:'curved',speed:1.8,divTime:500,size:3,motile:true,aerobic:false,gramPos:false},
+  pseudo:{name:'P. aeruginosa',color:'#4d96ff',shape:'rod',speed:1.5,divTime:650,size:4.5,motile:true,aerobic:true,gramPos:false},
+  custom:{name:'Custom',color:'#ff69b4',shape:'rod',speed:1.0,divTime:700,size:4,motile:true,aerobic:true,gramPos:false}
+};
+
+let env = {temperature:37,ph:7.0,oxygen:21,nutrientBase:0.5,salinity:0.9,uvRad:0,antibiotic:0,toxin:0};
+let bacteria = [];
+let deadBacteria = [];
+let nextId = 1;
+let tick = 0;
+let paused = false;
+let speed = 1;
+let selectedCell = null;
+let mode = 'spawn';
+let spawnCount = 1;
+let spawnEnergy = 80;
+let spawnMutRate = 0.02;
+let spawnSpecies = 'ecoli';
+let totalBirths = 0;
+let totalDeaths = 0;
+let totalMutations = 0;
+let maxGen = 0;
+let dragCell = null;
+
+let visFlags = {energy:false,nutrient:false,genome:false,stress:false,species:true,flagella:true,trails:true,biofilm:true,labels:false};
+
+let popHistory = [];
+let birthHistory = [];
+let deathHistory = [];
+let energyHistory = [];
+let mutHistory = [];
+const MAX_HIST = 120;
+
+function rnd(min,max){return Math.random()*(max-min)+min;}
+function rndInt(min,max){return Math.floor(rnd(min,max+1));}
+function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v));}
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function lerpColor(a,b,t){
+  const ah=a.replace('#',''),bh=b.replace('#','');
+  const ar=parseInt(ah.slice(0,2),16),ag=parseInt(ah.slice(2,4),16),ab=parseInt(ah.slice(4,6),16);
+  const br=parseInt(bh.slice(0,2),16),bg=parseInt(bh.slice(2,4),16),bb=parseInt(bh.slice(4,6),16);
+  return '#'+[Math.round(ar+(br-ar)*t),Math.round(ag+(bg-ag)*t),Math.round(ab+(bb-ab)*t)].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+function generateDNA(len=32){
+  const bases='ATGC';
+  return Array.from({length:len},()=>bases[rndInt(0,3)]).join('');
+}
+
+function mutateDNA(dna,rate){
+  const bases='ATGC';
+  return dna.split('').map(b=>Math.random()<rate?bases[rndInt(0,3)]:b).join('');
+}
+
+function dnaToColor(dna){
+  let r=0,g=0,b=0;
+  for(let i=0;i<dna.length;i++){
+    const c=dna.charCodeAt(i);
+    if(i%3===0)r=(r+c)%256;
+    else if(i%3===1)g=(g+c)%256;
+    else b=(b+c)%256;
+  }
+  return `rgb(${r},${g},${b})`;
+}
+
+function computeFitness(bact){
+  const sp = SPECIES_DATA[bact.species];
+  let f = 1.0;
+  const tempOpt = sp.aerobic ? 37 : 30;
+  f *= Math.max(0, 1 - Math.abs(env.temperature - tempOpt) / 40);
+  f *= Math.max(0, 1 - Math.abs(env.ph - 7) / 7);
+  if(sp.aerobic) f *= env.oxygen/21;
+  else f *= (1 - env.oxygen/100);
+  f *= 1 - env.antibiotic * (1 - bact.resistance.antibiotic);
+  f *= 1 - env.uvRad * (1 - bact.resistance.uv) * 0.5;
+  f *= 1 - env.toxin * 0.7;
+  f = clamp(f, 0, 1);
+  return f;
+}
+
+function createBacterium(x,y,opts={}){
+  const species = opts.species || spawnSpecies;
+  const sp = SPECIES_DATA[species];
+  const dna = opts.dna ? mutateDNA(opts.dna, opts.mutRate||0) : generateDNA(64);
+  const angle = rnd(0, Math.PI*2);
+  const b = {
+    id: nextId++,
+    x, y,
+    vx: Math.cos(angle)*sp.speed*rnd(0.5,1.5),
+    vy: Math.sin(angle)*sp.speed*rnd(0.5,1.5),
+    angle,
+    species,
+    dna,
+    energy: opts.energy !== undefined ? opts.energy : spawnEnergy,
+    health: 100,
+    size: sp.size * rnd(0.8,1.2) + (opts.sizeBonus||0),
+    speed: sp.speed * rnd(0.8,1.2),
+    divisionProgress: 0,
+    divisionTime: sp.divTime * rnd(0.8,1.2),
+    age: 0,
+    generation: opts.generation||0,
+    parentId: opts.parentId||null,
+    offspring: 0,
+    ancestors: opts.ancestors||0,
+    alive: true,
+    mutationRate: opts.mutRate !== undefined ? opts.mutRate : spawnMutRate,
+    resistance: {
+      antibiotic: rnd(0,0.3),
+      heat: rnd(0,0.3),
+      uv: rnd(0,0.3),
+      ph: rnd(0,0.3),
+      osm: rnd(0,0.3),
+      ...(opts.resistance||{})
+    },
+    flagellaAngle: 0,
+    flagellaPhase: rnd(0,Math.PI*2),
+    biofilm: false,
+    biofilmStrength: 0,
+    stress: 0,
+    trail: [],
+    color: sp.color,
+    glow: sp.color,
+    shape: sp.shape,
+    motile: sp.motile,
+    targetX: x, targetY: y,
+    chemotaxisTarget: null,
+    sporulated: false,
+    lineage: opts.lineage||(nextId-1),
+    isolated: false
+  };
+  return b;
+}
+
+function initNutrients(){
+  if(!nutrientGrid) return;
+  for(let i=0;i<NGRID*NGRID;i++) nutrientGrid[i] = env.nutrientBase * rnd(0.5,1.5);
+  renderNutrientMap();
+}
+
+function getNutrient(x,y){
+  const gx = clamp(Math.floor(x/W*NGRID),0,NGRID-1);
+  const gy = clamp(Math.floor(y/H*NGRID),0,NGRID-1);
+  return nutrientGrid[gy*NGRID+gx];
+}
+
+function consumeNutrient(x,y,amount){
+  const gx = clamp(Math.floor(x/W*NGRID),0,NGRID-1);
+  const gy = clamp(Math.floor(y/H*NGRID),0,NGRID-1);
+  nutrientGrid[gy*NGRID+gx] = Math.max(0, nutrientGrid[gy*NGRID+gx]-amount);
+}
+
+function diffuseNutrients(){
+  const next = new Float32Array(NGRID*NGRID);
+  for(let y=0;y<NGRID;y++) for(let x=0;x<NGRID;x++){
+    let sum = nutrientGrid[y*NGRID+x]*4;
+    if(x>0) sum+=nutrientGrid[y*NGRID+x-1];
+    if(x<NGRID-1) sum+=nutrientGrid[y*NGRID+x+1];
+    if(y>0) sum+=nutrientGrid[(y-1)*NGRID+x];
+    if(y<NGRID-1) sum+=nutrientGrid[(y+1)*NGRID+x];
+    next[y*NGRID+x] = sum/8 + env.nutrientBase*0.005;
+  }
+  nutrientGrid = next;
+}
+
+function renderNutrientMap(){
+  if(!visFlags.nutrient) return;
+  nctx.clearRect(0,0,W,H);
+  const cw=W/NGRID, ch=H/NGRID;
+  for(let y=0;y<NGRID;y++) for(let x=0;x<NGRID;x++){
+    const v = clamp(nutrientGrid[y*NGRID+x],0,1);
+    nctx.fillStyle = `rgba(0,255,136,${v*0.4})`;
+    nctx.fillRect(x*cw,y*ch,cw,ch);
+  }
+}
+
+function spawnBacteriumAt(x,y){
+  for(let i=0;i<spawnCount;i++){
+    const ox = rnd(-20,20), oy = rnd(-20,20);
+    bacteria.push(createBacterium(x+ox,y+oy));
+  }
+  log(`Spawned ${spawnCount}x ${SPECIES_DATA[spawnSpecies].name} at (${Math.round(x)},${Math.round(y)})`,'info');
+}
+
+function spawnColony(){
+  const cx = rnd(W*0.2,W*0.8), cy = rnd(H*0.2,H*0.8);
+  for(let i=0;i<25;i++){
+    const a = Math.random()*Math.PI*2, r = rnd(0,40);
+    bacteria.push(createBacterium(cx+Math.cos(a)*r, cy+Math.sin(a)*r));
+  }
+  log('Colony spawned (25 cells)','success');
+}
+
+function spawnRandom(){
+  for(let i=0;i<50;i++) bacteria.push(createBacterium(rnd(20,W-20),rnd(20,H-20)));
+  log('Random seed: 50 bacteria','success');
+}
+
+function massKill(fraction){
+  let killed=0;
+  bacteria.filter(b=>b.alive).forEach(b=>{
+    if(Math.random()<fraction*(1-b.resistance.antibiotic)){
+      killBacterium(b);
+      killed++;
+    }
+  });
+  log(`Antibiotic event: ${killed} cells killed`,'danger');
+}
+
+function massMutate(){
+  let mutated=0;
+  bacteria.filter(b=>b.alive).forEach(b=>{
+    const rate = rnd(0.05,0.3);
+    b.dna = mutateDNA(b.dna, rate);
+    b.mutationRate = clamp(b.mutationRate + rnd(0,0.05), 0, 1);
+    applyMutationEffects(b);
+    mutated++;
+    totalMutations++;
+  });
+  log(`Radiation burst: ${mutated} cells mutated`,'purple');
+}
+
+function evolutionPressure(){
+  massKill(0.7);
+  setTimeout(()=>{
+    const survivors = bacteria.filter(b=>b.alive);
+    survivors.forEach(b=>{
+      b.resistance.antibiotic = clamp(b.resistance.antibiotic+rnd(0,0.2),0,1);
+      b.fitness = computeFitness(b);
+    });
+    log('Evolution pressure applied: survivors gained resistance','warn');
+  },100);
+}
+
+function reviveAll(){
+  let n=0;
+  deadBacteria.forEach(b=>{
+    b.alive=true;
+    b.energy=50;
+    b.health=30;
+    bacteria.push(b);
+    n++;
+  });
+  deadBacteria=[];
+  if(n) log(`${n} bacteria revived`,'success');
+}
+
+function clearDead(){
+  deadBacteria=[];
+  bacteria=bacteria.filter(b=>b.alive);
+  log('Corpses cleared','info');
+}
+
+function resetAll(){
+  bacteria=[];deadBacteria=[];nextId=1;tick=0;totalBirths=0;totalDeaths=0;totalMutations=0;maxGen=0;selectedCell=null;
+  popHistory=[];birthHistory=[];deathHistory=[];energyHistory=[];mutHistory=[];
+  document.getElementById('cell-detail').style.display='none';
+  document.getElementById('no-selection').style.display='block';
+  initNutrients();
+  log('Simulation reset','warn');
+}
+
+function killBacterium(b){
+  b.alive=false;
+  b.health=0;
+  b.energy=0;
+  deadBacteria.push(b);
+  bacteria=bacteria.filter(x=>x!==b);
+  totalDeaths++;
+  if(selectedCell===b){document.getElementById('ci-status').textContent='DEAD';document.getElementById('ci-status').className='info-val red';}
+}
+
+function killSelected(){if(selectedCell&&selectedCell.alive) killBacterium(selectedCell);}
+function reviveSelected(){
+  if(selectedCell&&!selectedCell.alive){
+    selectedCell.alive=true;selectedCell.energy=50;selectedCell.health=30;
+    bacteria.push(selectedCell);
+    deadBacteria=deadBacteria.filter(b=>b!==selectedCell);
+    log(`Cell #${selectedCell.id} revived`,'success');
+  }
+}
+function mutateSelected(){
+  if(selectedCell){
+    const r=rnd(0.05,0.2);
+    selectedCell.dna=mutateDNA(selectedCell.dna,r);
+    applyMutationEffects(selectedCell);
+    totalMutations++;
+    log(`Cell #${selectedCell.id} force mutated`,'purple');
+  }
+}
+function cloneSelected(){
+  if(selectedCell){
+    const clone=createBacterium(selectedCell.x+rnd(-15,15),selectedCell.y+rnd(-15,15),{
+      species:selectedCell.species,dna:selectedCell.dna,
+      energy:selectedCell.energy*0.8,generation:selectedCell.generation,
+      parentId:selectedCell.id,resistance:{...selectedCell.resistance},
+      mutRate:selectedCell.mutationRate,lineage:selectedCell.lineage
+    });
+    bacteria.push(clone);
+    log(`Cell #${selectedCell.id} cloned → #${clone.id}`,'info');
+  }
+}
+function isolateSelected(){
+  if(selectedCell){
+    const lin=selectedCell.lineage;
+    bacteria.forEach(b=>{b.isolated=(b.lineage!==lin);});
+    log(`Isolated lineage ${lin}`,'info');
+  }
+}
+
+function applyMutationEffects(b){
+  const roll=Math.random();
+  if(roll<0.15){b.speed*=rnd(0.7,1.5);b.speed=clamp(b.speed,0.1,5);}
+  if(roll<0.1){b.size*=rnd(0.8,1.3);b.size=clamp(b.size,1,12);}
+  if(roll<0.2){
+    const res=Object.keys(b.resistance);
+    const k=res[rndInt(0,res.length-1)];
+    b.resistance[k]=clamp(b.resistance[k]+rnd(-0.1,0.2),0,1);
+  }
+  if(roll<0.05){b.motile=!b.motile;}
+  if(roll<0.08){b.divisionTime*=rnd(0.7,1.4);}
+  b.color = visFlags.genome ? dnaToColor(b.dna) : SPECIES_DATA[b.species].color;
+}
+
+function divideBacterium(b){
+  b.divisionProgress=0;
+  b.energy*=0.5;
+  b.offspring++;
+  totalBirths++;
+  const child=createBacterium(b.x+rnd(-b.size*2,b.size*2),b.y+rnd(-b.size*2,b.size*2),{
+    species:b.species,
+    dna:mutateDNA(b.dna,b.mutationRate),
+    energy:b.energy,
+    generation:b.generation+1,
+    parentId:b.id,
+    resistance:{...b.resistance},
+    mutRate:b.mutationRate,
+    ancestors:b.ancestors+1,
+    lineage:b.lineage
+  });
+  if(child.generation>maxGen) maxGen=child.generation;
+  if(Math.random()<b.mutationRate){
+    applyMutationEffects(child);
+    totalMutations++;
+  }
+  bacteria.push(child);
+}
+
+function updateBacterium(b, dt){
+  if(!b.alive) return;
+  b.age+=dt;
+  b.flagellaAngle+=0.3*dt;
+
+  const fitness=computeFitness(b);
+  b.fitness=fitness;
+  b.stress=1-fitness;
+
+  const nutr=getNutrient(b.x,b.y);
+  const energyGain=nutr*fitness*0.8*dt;
+  b.energy=clamp(b.energy+energyGain-0.15*dt,0,100);
+  if(nutr>0.01) consumeNutrient(b.x,b.y,0.003*dt);
+
+  const damageRate=b.stress*0.4*dt + env.uvRad*(1-b.resistance.uv)*0.3*dt + env.antibiotic*(1-b.resistance.antibiotic)*0.5*dt + env.toxin*0.6*dt;
+  b.health=clamp(b.health-damageRate+(b.energy>50?0.05*dt:0),0,100);
+
+  if(b.energy<=0||b.health<=0){killBacterium(b);return;}
+
+  if(b.motile&&!b.biofilm){
+    let bestNut=nutr; let bx=b.x,by=b.y;
+    for(let i=0;i<4;i++){
+      const a=Math.random()*Math.PI*2,r=20;
+      const tx=b.x+Math.cos(a)*r, ty=b.y+Math.sin(a)*r;
+      const n=getNutrient(tx,ty);
+      if(n>bestNut){bestNut=n;bx=tx;by=ty;}
+    }
+    const chemStrength=0.3;
+    const dx=bx-b.x, dy=by-b.y;
+    if(Math.hypot(dx,dy)>1){
+      b.vx+=dx/Math.hypot(dx,dy)*chemStrength;
+      b.vy+=dy/Math.hypot(dx,dy)*chemStrength;
+    }
+    b.vx+=rnd(-0.2,0.2)*dt;
+    b.vy+=rnd(-0.2,0.2)*dt;
+    const spd=Math.hypot(b.vx,b.vy);
+    const maxSpd=b.speed*(0.5+b.energy/100);
+    if(spd>maxSpd){b.vx=b.vx/spd*maxSpd;b.vy=b.vy/spd*maxSpd;}
+    b.x+=b.vx*dt;
+    b.y+=b.vy*dt;
+    b.angle=Math.atan2(b.vy,b.vx);
+  } else if(!b.biofilm){
+    b.x+=rnd(-0.2,0.2)*dt;
+    b.y+=rnd(-0.2,0.2)*dt;
+  }
+
+  if(b.x<b.size){b.x=b.size;b.vx=Math.abs(b.vx);}
+  if(b.x>W-b.size){b.x=W-b.size;b.vx=-Math.abs(b.vx);}
+  if(b.y<b.size){b.y=b.size;b.vy=Math.abs(b.vy);}
+  if(b.y>H-b.size){b.y=H-b.size;b.vy=-Math.abs(b.vy);}
+
+  if(visFlags.trails){
+    b.trail.push({x:b.x,y:b.y});
+    if(b.trail.length>20) b.trail.shift();
+  } else b.trail=[];
+
+  if(!b.biofilm&&bacteria.filter(x=>x.alive&&x!==b&&dist(x,b)<b.size*3).length>4){
+    if(Math.random()<0.001*dt) b.biofilm=true;
+  }
+  if(b.biofilm) b.biofilmStrength=clamp(b.biofilmStrength+0.001*dt,0,1);
+
+  if(b.energy>70&&b.health>60&&bacteria.filter(x=>x.alive).length<800){
+    b.divisionProgress+=dt/b.divisionTime*fitness;
+    if(b.divisionProgress>=1) divideBacterium(b);
+  }
+}
+
+function drawBacterium(b){
+  const alive=b.alive;
+  const col=alive?(visFlags.genome?dnaToColor(b.dna):visFlags.species?b.color:visFlags.energy?energyColor(b.energy):visFlags.stress?stressColor(b.stress):b.color):'#333';
+  const alpha=alive?(b.isolated?0.3:1):(b.isolated?0.1:0.25);
+
+  if(visFlags.trails&&b.trail.length>1&&alive){
+    ctx.beginPath();
+    ctx.moveTo(b.trail[0].x,b.trail[0].y);
+    for(let i=1;i<b.trail.length;i++) ctx.lineTo(b.trail[i].x,b.trail[i].y);
+    ctx.strokeStyle=col+'33';
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
+
+  if(visFlags.biofilm&&b.biofilm&&alive){
+    ctx.beginPath();
+    ctx.arc(b.x,b.y,b.size*2.5,0,Math.PI*2);
+    ctx.fillStyle=`rgba(180,74,255,${b.biofilmStrength*0.15})`;
+    ctx.fill();
+  }
+
+  ctx.save();
+  ctx.translate(b.x,b.y);
+  ctx.globalAlpha=alpha;
+
+  if(alive&&(selectedCell===b||b.divisionProgress>0.8)){
+    ctx.shadowColor=col;
+    ctx.shadowBlur=b.divisionProgress>0.8?12:8;
+  }
+
+  const s=b.size;
+  if(b.shape==='rod'||b.shape==='curved'){
+    ctx.rotate(b.angle);
+    ctx.beginPath();
+    if(b.shape==='curved'){
+      ctx.moveTo(-s*1.5,0);
+      ctx.quadraticCurveTo(0,-s*0.8,s*1.5,0);
+      ctx.quadraticCurveTo(0,s*0.8,-s*1.5,0);
+    } else {
+      const rx=s*1.6, ry=s*0.7;
+      ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);
+    }
+    ctx.fillStyle=col;
+    ctx.fill();
+    if(alive){ctx.strokeStyle=col+'99';ctx.lineWidth=0.8;ctx.stroke();}
+  } else if(b.shape==='coccus'){
+    ctx.beginPath();ctx.arc(0,0,s,0,Math.PI*2);
+    ctx.fillStyle=col;ctx.fill();
+    if(alive){ctx.strokeStyle=col+'99';ctx.lineWidth=0.8;ctx.stroke();}
+  } else if(b.shape==='chain'){
+    for(let i=-1;i<=1;i++){
+      ctx.beginPath();ctx.arc(i*s*1.2,0,s*0.7,0,Math.PI*2);
+      ctx.fillStyle=col;ctx.fill();
+    }
+  }
+
+  if(visFlags.flagella&&b.motile&&alive&&!b.biofilm){
+    ctx.shadowBlur=0;
+    ctx.strokeStyle=col+'88';ctx.lineWidth=0.6;
+    const nf=rndInt(1,3);
+    for(let f=0;f<2;f++){
+      ctx.beginPath();
+      ctx.moveTo(b.shape==='rod'?-s*1.6:0,0);
+      const fa=b.flagellaAngle+(f*Math.PI);
+      for(let i=0;i<8;i++){
+        const t=i/8;
+        ctx.lineTo(-s*1.6-i*2.5,Math.sin(fa+i*1.2)*s*(1.5-t*0.5));
+      }
+      ctx.stroke();
+    }
+  }
+
+  if(alive&&b.divisionProgress>0.5){
+    ctx.strokeStyle=`rgba(180,74,255,${(b.divisionProgress-0.5)*2})`;
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(0,-s*1.5);ctx.lineTo(0,s*1.5);
+    ctx.stroke();
+  }
+
+  if(visFlags.labels&&alive){
+    ctx.rotate(-b.angle||0);
+    ctx.font='7px Share Tech Mono';
+    ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.textAlign='center';
+    ctx.fillText('#'+b.id,-0,-s-4);
+  }
+
+  if(visFlags.energy&&alive){
+    const barW=s*3,barH=2;
+    ctx.fillStyle='#111';
+    ctx.fillRect(-barW/2,-s-6,barW,barH);
+    ctx.fillStyle=b.energy>60?'#00ff88':b.energy>30?'#ffcc00':'#ff2244';
+    ctx.fillRect(-barW/2,-s-6,barW*b.energy/100,barH);
+  }
+
+  ctx.restore();
+}
+
+function energyColor(e){
+  if(e>70) return '#00ff88';
+  if(e>40) return '#ffcc00';
+  return '#ff2244';
+}
+function stressColor(s){
+  if(s<0.3) return '#00ff88';
+  if(s<0.6) return '#ffcc00';
+  return '#ff2244';
+}
+
+let lastTickBirths=0, lastTickDeaths=0, lastTickMut=0;
+
+function update(){
+  if(paused) return;
+  const dt=speed;
+  const prevBirths=totalBirths, prevDeaths=totalDeaths, prevMut=totalMutations;
+
+  for(let i=bacteria.length-1;i>=0;i--) updateBacterium(bacteria[i],dt);
+
+  if(tick%15===0) diffuseNutrients();
+  if(tick%60===0) renderNutrientMap();
+
+  tick++;
+  lastTickBirths=totalBirths-prevBirths;
+  lastTickDeaths=totalDeaths-prevDeaths;
+  lastTickMut=totalMutations-prevMut;
+
+  if(tick%30===0) updateHistory();
+}
+
+function updateHistory(){
+  const alive=bacteria.filter(b=>b.alive);
+  const avgE=alive.length?alive.reduce((a,b)=>a+b.energy,0)/alive.length:0;
+  popHistory.push(alive.length);
+  birthHistory.push(lastTickBirths*2);
+  deathHistory.push(lastTickDeaths*2);
+  energyHistory.push(avgE);
+  mutHistory.push(lastTickMut*2);
+  if(popHistory.length>MAX_HIST){popHistory.shift();birthHistory.shift();deathHistory.shift();energyHistory.shift();mutHistory.shift();}
+}
+
+function draw(){
+  ctx.fillStyle='rgba(2,4,9,0.85)';
+  ctx.fillRect(0,0,W,H);
+
+  if(env.antibiotic>0){
+    ctx.fillStyle=`rgba(255,34,68,${env.antibiotic*0.06})`;
+    ctx.fillRect(0,0,W,H);
+  }
+  if(env.uvRad>0){
+    ctx.fillStyle=`rgba(180,74,255,${env.uvRad*0.04})`;
+    ctx.fillRect(0,0,W,H);
+  }
+
+  deadBacteria.forEach(b=>drawBacterium(b));
+  bacteria.forEach(b=>drawBacterium(b));
+
+  if(selectedCell){
+    ctx.save();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;
+    ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.arc(selectedCell.x,selectedCell.y,selectedCell.size+6,0,Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+}
+
+function drawMiniChart(canvasId,data,color,max){
+  const c=document.getElementById(canvasId);
+  if(!c) return;
+  const cx=c.getContext('2d');
+  const cW=c.offsetWidth||c.width,cH=c.offsetHeight||c.height;
+  c.width=cW;c.height=cH;
+  cx.clearRect(0,0,cW,cH);
+  if(data.length<2) return;
+  const mx=max||Math.max(...data,1);
+  cx.beginPath();
+  cx.moveTo(0,cH-data[0]/mx*cH);
+  for(let i=1;i<data.length;i++) cx.lineTo(i/(data.length-1)*cW,cH-data[i]/mx*cH);
+  cx.strokeStyle=color;cx.lineWidth=1.5;cx.stroke();
+  cx.lineTo(cW,cH);cx.lineTo(0,cH);
+  cx.fillStyle=color+'22';cx.fill();
+}
+
+function drawPopChart(){
+  const c=document.getElementById('popChart');
+  if(!c) return;
+  const cx=c.getContext('2d');
+  const cW=c.offsetWidth||c.width,cH=c.offsetHeight||c.height;
+  c.width=cW;c.height=cH;
+  cx.clearRect(0,0,cW,cH);
+  if(popHistory.length<2) return;
+  const mx=Math.max(...popHistory,10);
+  cx.beginPath();
+  cx.moveTo(0,cH-popHistory[0]/mx*cH);
+  for(let i=1;i<popHistory.length;i++) cx.lineTo(i/(popHistory.length-1)*cW,cH-popHistory[i]/mx*cH);
+  cx.strokeStyle='#00e5ff';cx.lineWidth=2;cx.stroke();
+  cx.lineTo(cW,cH);cx.lineTo(0,cH);
+  cx.fillStyle='rgba(0,229,255,0.1)';cx.fill();
+  cx.font='8px Share Tech Mono';cx.fillStyle='#6a8fbb';
+  cx.fillText('MAX:'+mx,4,10);
+  cx.fillText('NOW:'+bacteria.filter(b=>b.alive).length,4,20);
+}
+
+function drawSpeciesChart(){
+  const c=document.getElementById('speciesChart');
+  if(!c) return;
+  const cx=c.getContext('2d');
+  const cW=c.offsetWidth||c.width,cH=c.offsetHeight||c.height;
+  c.width=cW;c.height=cH;
+  cx.clearRect(0,0,cW,cH);
+  const counts={};
+  bacteria.filter(b=>b.alive).forEach(b=>{counts[b.species]=(counts[b.species]||0)+1;});
+  const total=Object.values(counts).reduce((a,v)=>a+v,0)||1;
+  let x=0;
+  const legend=document.getElementById('species-legend');
+  legend.innerHTML='';
+  Object.entries(counts).forEach(([sp,n])=>{
+    const w=n/total*cW;
+    cx.fillStyle=SPECIES_DATA[sp].color;
+    cx.fillRect(x,0,w,cH);
+    x+=w;
+    const el=document.createElement('span');
+    el.innerHTML=`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${SPECIES_DATA[sp].color};margin-right:3px;"></span>${SPECIES_DATA[sp].name}(${n})`;
+    el.style.fontSize='8px';el.style.color='#6a8fbb';el.style.marginRight='6px';
+    legend.appendChild(el);
+  });
+}
+
+function updateUI(){
+  const alive=bacteria.filter(b=>b.alive);
+  document.getElementById('stat-pop').textContent=alive.length;
+  document.getElementById('stat-gen').textContent=maxGen;
+  document.getElementById('stat-births').textContent=totalBirths;
+  document.getElementById('stat-deaths').textContent=totalDeaths;
+  document.getElementById('stat-mut').textContent=totalMutations;
+  document.getElementById('sim-tick').textContent=String(tick).padStart(5,'0');
+
+  const totalNut=nutrientGrid?Array.from(nutrientGrid).reduce((a,v)=>a+v,0)/(NGRID*NGRID*env.nutrientBase||0.001):1;
+  document.getElementById('stat-nut').textContent=Math.round(clamp(totalNut,0,1)*100)+'%';
+
+  const bioCount=alive.filter(b=>b.biofilm).length;
+  const bioPct=alive.length?Math.round(bioCount/alive.length*100):0;
+  document.getElementById('stat-bio').textContent=bioPct+'%';
+
+  document.getElementById('env-temp').textContent=env.temperature+'°C';
+  document.getElementById('env-ph').textContent=env.ph.toFixed(1);
+  document.getElementById('env-o2').textContent=env.oxygen+'%';
+  document.getElementById('env-nut').textContent=Math.round(env.nutrientBase*100)+'%';
+  document.getElementById('env-sal').textContent=env.salinity.toFixed(1)+'%';
+  document.getElementById('env-uv').textContent=Math.round(env.uvRad*100)+'%';
+  document.getElementById('env-ab').textContent=Math.round(env.antibiotic*100)+'%';
+  document.getElementById('env-tox').textContent=Math.round(env.toxin*100)+'%';
+
+  const stressIdx=env.antibiotic+env.uvRad+env.toxin+(Math.abs(env.temperature-37)/40)+(Math.abs(env.ph-7)/7);
+  const stressEl=document.getElementById('env-stress');
+  if(stressIdx<0.5){stressEl.textContent='LOW';stressEl.className='info-val green';}
+  else if(stressIdx<1.5){stressEl.textContent='MODERATE';stressEl.className='info-val yellow';}
+  else{stressEl.textContent='CRITICAL';stressEl.className='info-val red';}
+
+  const avgFit=alive.length?alive.reduce((a,b)=>a+(b.fitness||0),0)/alive.length:0;
+  document.getElementById('fitness-bar').style.width=Math.round(avgFit*100)+'%';
+  document.getElementById('biofilm-bar').style.width=bioPct+'%';
+
+  if(selectedCell){
+    const b=selectedCell;
+    document.getElementById('ci-id').textContent='#'+b.id;
+    document.getElementById('ci-species').textContent=SPECIES_DATA[b.species].name;
+    document.getElementById('ci-age').textContent=Math.round(b.age);
+    document.getElementById('ci-gen').textContent=b.generation;
+    document.getElementById('ci-energy').textContent=Math.round(b.energy)+'%';
+    document.getElementById('ci-energy-bar').style.width=b.energy+'%';
+    document.getElementById('ci-health').textContent=Math.round(b.health)+'%';
+    document.getElementById('ci-health-bar').style.width=b.health+'%';
+    document.getElementById('ci-size').textContent=b.size.toFixed(1)+'µm';
+    document.getElementById('ci-speed').textContent=b.speed.toFixed(2)+'µm/s';
+    document.getElementById('ci-div').textContent=Math.round(b.divisionProgress*100)+'%';
+    document.getElementById('ci-div-bar').style.width=(b.divisionProgress*100)+'%';
+    document.getElementById('ci-mrate').textContent=(b.mutationRate*100).toFixed(1)+'%';
+    document.getElementById('ci-fitness').textContent=((b.fitness||0)*100).toFixed(1)+'%';
+    document.getElementById('ci-offspring').textContent=b.offspring;
+    document.getElementById('ci-ancestors').textContent=b.ancestors;
+    document.getElementById('ci-status').textContent=b.alive?(b.biofilm?'BIOFILM':b.sporulated?'SPORULATED':'ACTIVE'):'DEAD';
+    document.getElementById('ci-status').className='info-val '+(b.alive?'green':'red');
+
+    const dnaEl=document.getElementById('ci-dna');
+    dnaEl.innerHTML=b.dna.split('').map(c=>`<span class="dna-${c}">${c}</span>`).join('');
+
+    const traitsEl=document.getElementById('ci-traits');
+    traitsEl.innerHTML='';
+    if(b.motile) traitsEl.innerHTML+='<span class="badge badge-g">MOTILE</span>';
+    if(b.biofilm) traitsEl.innerHTML+='<span class="badge badge-p">BIOFILM</span>';
+    if(b.resistance.antibiotic>0.5) traitsEl.innerHTML+='<span class="badge badge-r">AB-RESIST</span>';
+    if(SPECIES_DATA[b.species].gramPos) traitsEl.innerHTML+='<span class="badge badge-y">GRAM+</span>';
+    else traitsEl.innerHTML+='<span class="badge badge-b">GRAM-</span>';
+    if(b.mutationRate>0.05) traitsEl.innerHTML+='<span class="badge badge-p">HYPERMUTABLE</span>';
+    if(b.fitness>0.8) traitsEl.innerHTML+='<span class="badge badge-g">HIGH-FIT</span>';
+
+    document.getElementById('res-antibiotic').style.width=(b.resistance.antibiotic*100)+'%';
+    document.getElementById('res-heat').style.width=(b.resistance.heat*100)+'%';
+    document.getElementById('res-uv').style.width=(b.resistance.uv*100)+'%';
+    document.getElementById('res-ph').style.width=(b.resistance.ph*100)+'%';
+    document.getElementById('res-osm').style.width=(b.resistance.osm*100)+'%';
+  }
+
+  drawPopChart();
+  drawSpeciesChart();
+  drawMiniChart('bdChart',birthHistory,'#00ff88',20);
+  drawMiniChart('energyChart',energyHistory,'#00e5ff',100);
+  drawMiniChart('mutChart',mutHistory,'#b44aff',10);
+}
+
+let logEntries=[];
+function log(msg,type='info'){
+  const el=document.createElement('div');
+  el.className='log-entry';
+  el.innerHTML=`<span class="log-time">${String(tick).padStart(5,'0')}</span><span class="log-msg ${type}">${msg}</span>`;
+  const lp=document.getElementById('logpanel');
+  lp.appendChild(el);
+  while(lp.children.length>52) lp.removeChild(lp.children[1]);
+  lp.scrollTop=lp.scrollHeight;
+}
+
+function setMode(m){
+  mode=m;
+  document.querySelectorAll('[id^="mode-btn-"]').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('mode-btn-'+m);
+  if(btn) btn.classList.add('active');
+  document.getElementById('mode-indicator').textContent='MODE: '+m.toUpperCase();
+}
+
+function togglePause(){
+  paused=!paused;
+  document.getElementById('simpause').textContent=paused?'▶ RESUME':'❚❚ PAUSE';
+}
+
+function setSpeed(v){speed=+v;}
+
+function setEnvParam(k,v){env[k]=v;}
+
+function updateSpawnSpecies(){
+  spawnSpecies=document.getElementById('spawn-species').value;
+}
+
+function toggleVis(k){
+  visFlags[k]=!visFlags[k];
+  const btn=document.getElementById('vis-'+k);
+  if(btn) btn.classList.toggle('active',visFlags[k]);
+  if(k==='nutrient'&&!visFlags.nutrient) nctx.clearRect(0,0,W,H);
+  if(k==='genome'&&visFlags.genome) bacteria.forEach(b=>b.color=dnaToColor(b.dna));
+  if(k==='genome'&&!visFlags.genome) bacteria.forEach(b=>b.color=SPECIES_DATA[b.species].color);
+}
+
+simcanvas.addEventListener('mousedown',e=>{
+  const rect=simcanvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const hit=[...bacteria,...deadBacteria].find(b=>dist({x:mx,y:my},b)<b.size+6);
+
+  if(mode==='select'){
+    if(hit){
+      selectedCell=hit;
+      document.getElementById('no-selection').style.display='none';
+      document.getElementById('cell-detail').style.display='block';
+    }
+  } else if(mode==='kill'){
+    if(hit&&hit.alive) killBacterium(hit);
+    else{
+      const r=20;
+      bacteria.filter(b=>b.alive&&dist({x:mx,y:my},b)<r).forEach(b=>killBacterium(b));
+    }
+  } else if(mode==='revive'){
+    if(hit&&!hit.alive) reviveSelected();
+    else{
+      const toRevive=deadBacteria.filter(b=>dist({x:mx,y:my},b)<30);
+      toRevive.forEach(b=>{b.alive=true;b.energy=50;b.health=40;bacteria.push(b);});
+      deadBacteria=deadBacteria.filter(b=>!toRevive.includes(b));
+      if(toRevive.length) log(`${toRevive.length} bacteria revived`,'success');
+    }
+  } else if(mode==='spawn'){
+    spawnBacteriumAt(mx,my);
+  } else if(mode==='mutate'){
+    if(hit){selectedCell=hit;mutateSelected();}
+    else bacteria.filter(b=>b.alive&&dist({x:mx,y:my},b)<30).forEach(b=>{
+      b.dna=mutateDNA(b.dna,0.15);applyMutationEffects(b);totalMutations++;
+    });
+  } else if(mode==='inject'){
+    const gx=clamp(Math.floor(mx/W*NGRID)-2,0,NGRID-4);
+    const gy=clamp(Math.floor(my/H*NGRID)-2,0,NGRID-4);
+    for(let dy=0;dy<5;dy++) for(let dx=0;dx<5;dx++){
+      const i=(gy+dy)*NGRID+(gx+dx);
+      if(i>=0&&i<nutrientGrid.length) nutrientGrid[i]=Math.min(1,nutrientGrid[i]+0.5);
+    }
+    log('Nutrient injected','success');
+    renderNutrientMap();
+  } else if(mode==='toxic'){
+    const r=40;
+    bacteria.filter(b=>b.alive&&dist({x:mx,y:my},b)<r).forEach(b=>{
+      b.health-=rnd(20,60);
+      b.energy-=rnd(10,30);
+      if(b.health<=0||b.energy<=0) killBacterium(b);
+    });
+    log('Toxin injected','danger');
+  } else if(mode==='move'){
+    if(hit&&hit.alive) dragCell=hit;
+  }
+});
+
+simcanvas.addEventListener('mousemove',e=>{
+  const rect=simcanvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  if(dragCell&&mode==='move'){
+    dragCell.x=mx;dragCell.y=my;dragCell.vx=0;dragCell.vy=0;
+  }
+  const tip=document.getElementById('tooltip');
+  const hit=[...bacteria,...deadBacteria].find(b=>dist({x:mx,y:my},b)<b.size+8);
+  if(hit){
+    tip.style.display='block';
+    tip.style.left=(e.clientX+12)+'px';
+    tip.style.top=(e.clientY-10)+'px';
+    tip.innerHTML=`<b>#${hit.id}</b> ${SPECIES_DATA[hit.species].name}<br>E:${Math.round(hit.energy)}% H:${Math.round(hit.health)}% Gen:${hit.generation}<br>${hit.alive?'<span style="color:#00ff88">ALIVE</span>':'<span style="color:#ff2244">DEAD</span>'} ${hit.biofilm?'· BIOFILM':''}`;
+  } else {
+    tip.style.display='none';
+  }
+});
+
+simcanvas.addEventListener('mouseup',()=>{dragCell=null;});
+simcanvas.addEventListener('mouseleave',()=>{dragCell=null;document.getElementById('tooltip').style.display='none';});
+
+function mainLoop(){
+  update();
+  draw();
+  if(tick%3===0) updateUI();
+  requestAnimationFrame(mainLoop);
+}
+
+resizeCanvas();
+initNutrients();
+
+for(let i=0;i<20;i++) bacteria.push(createBacterium(rnd(50,W-50),rnd(50,H-50)));
+visFlags.species=true;
+document.getElementById('vis-species').classList.add('active');
+document.getElementById('vis-flagella').classList.add('active');
+document.getElementById('vis-trails').classList.add('active');
+document.getElementById('vis-biofilm').classList.add('active');
+
+log('BACTERIUM simulator initialized','success');
+log('20 E. coli seeded','info');
+log('Click canvas to interact','info');
+
+mainLoop();
+</script>
+</body>
+</html>
