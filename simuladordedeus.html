@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>deus Simulador Supremo</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.16), transparent 30%),
+        radial-gradient(circle at 80% 0%, rgba(168, 85, 247, 0.2), transparent 28%),
+        radial-gradient(circle at 50% 100%, rgba(34, 197, 94, 0.14), transparent 30%),
+        linear-gradient(180deg, #020617 0%, #050816 45%, #020617 100%);
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      overflow: hidden;
+    }
+    .glass {
+      background: rgba(15, 23, 42, 0.58);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+      backdrop-filter: blur(14px);
+    }
+    .scrollbar::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.35);
+      border-radius: 999px;
+    }
+    .scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.2);
+    }
+    .power-btn.active,
+    .scale-btn.active,
+    .tab-btn.active {
+      transform: translateY(-1px);
+      border-color: rgba(96, 165, 250, 0.8);
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.38), rgba(124, 58, 237, 0.34));
+      box-shadow: 0 0 0 1px rgba(96,165,250,0.18), 0 8px 24px rgba(59,130,246,0.15);
+    }
+    canvas {
+      image-rendering: auto;
+    }
+    .range {
+      accent-color: #60a5fa;
+    }
+    .chip {
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(15, 23, 42, 0.5);
+    }
+    .bar {
+      overflow: hidden;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+    .bar > div {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.25s ease;
+    }
+    .text-glow {
+      text-shadow: 0 0 20px rgba(96, 165, 250, 0.28);
+    }
+    .pulse-ring {
+      position: absolute;
+      border-radius: 999px;
+      border: 2px solid rgba(96, 165, 250, 0.55);
+      pointer-events: none;
+      animation: ripple 0.7s ease-out forwards;
+    }
+    @keyframes ripple {
+      0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0; }
+    }
+    .starfield {
+      background-image:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15) 1px, transparent 1.5px),
+        radial-gradient(circle at 70% 40%, rgba(255,255,255,0.12) 1px, transparent 1.5px),
+        radial-gradient(circle at 60% 80%, rgba(255,255,255,0.08) 1px, transparent 1.5px),
+        radial-gradient(circle at 10% 70%, rgba(255,255,255,0.10) 1px, transparent 1.5px);
+      background-size: 180px 180px, 240px 240px, 300px 300px, 220px 220px;
+    }
+  </style>
+</head>
+<body class="text-slate-100 select-none">
+  <div class="absolute inset-0 starfield opacity-60"></div>
+  <div class="relative z-10 h-screen w-screen p-3 md:p-4">
+    <div class="grid h-full grid-cols-1 gap-3 xl:grid-cols-[340px_minmax(0,1fr)_320px]">
+      <aside class="glass scrollbar flex min-h-0 flex-col rounded-3xl p-4 overflow-auto">
+        <div class="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs uppercase tracking-[0.35em] text-sky-300/80">Simulador Supremo</p>
+            <h1 class="text-2xl font-black text-white text-glow md:text-3xl">deus do Tudo</h1>
+            <p class="mt-1 text-sm text-slate-300">Molde vida, criaturas, mundos, sistemas, galáxias e universos.</p>
+          </div>
+          <div class="rounded-2xl border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-right">
+            <div class="text-[10px] uppercase tracking-[0.25em] text-amber-200/70">Poder Divino</div>
+            <div id="energyValue" class="text-xl font-black text-amber-200">1000</div>
+          </div>
+        </div>
+
+        <div class="mb-4 rounded-2xl border border-slate-700/50 bg-slate-900/50 p-3">
+          <div class="mb-2 flex items-center justify-between">
+            <span class="text-xs uppercase tracking-[0.25em] text-slate-400">Escala de criação</span>
+            <span id="scaleLabel" class="rounded-full bg-sky-400/10 px-2 py-1 text-xs font-semibold text-sky-300">Bactérias</span>
+          </div>
+          <div id="scaleButtons" class="grid grid-cols-2 gap-2"></div>
+        </div>
+
+        <div class="mb-4 rounded-2xl border border-slate-700/50 bg-slate-900/50 p-3">
+          <div class="mb-2 flex items-center justify-between">
+            <span class="text-xs uppercase tracking-[0.25em] text-slate-400">Poder ativo</span>
+            <span id="powerLabel" class="rounded-full bg-violet-400/10 px-2 py-1 text-xs font-semibold text-violet-300">Gerar Vida</span>
+          </div>
+          <div id="powerButtons" class="grid grid-cols-2 gap-2"></div>
+        </div>
+
+        <div class="mb-4 rounded-2xl border border-slate-700/50 bg-slate-900/50 p-3">
+          <div class="mb-3 flex items-center justify-between">
+            <span class="text-xs uppercase tracking-[0.25em] text-slate-400">Fluxo do tempo</span>
+            <span id="timeValue" class="text-sm font-semibold text-slate-200">1.0x</span>
+          </div>
+          <input id="timeSlider" class="range w-full" type="range" min="0.2" max="6" step="0.1" value="1">
+          <div class="mt-3 grid grid-cols-2 gap-2">
+            <button id="pauseBtn" class="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm font-semibold transition hover:bg-slate-700">Pausar</button>
+            <button id="boostBtn" class="rounded-xl border border-sky-500/30 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-200 transition hover:bg-sky-500/25">Acelerar Era</button>
+            <button id="saveBtn" class="rounded-xl border border-emerald-500/30 bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/25">Salvar Mundo</button>
+            <button id="loadBtn" class="rounded-xl border border-violet-500/30 bg-violet-500/15 px-3 py-2 text-sm font-semibold text-violet-200 transition hover:bg-violet-500/25">Carregar Mundo</button>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-700/50 bg-slate-900/50 p-3">
+          <div class="mb-2 text-xs uppercase tracking-[0.25em] text-slate-400">Ações rápidas</div>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="seedLifeBtn" class="rounded-xl border border-emerald-400/30 bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/25">Semear Vida</button>
+            <button id="terraformBtn" class="rounded-xl border border-cyan-400/30 bg-cyan-500/15 px-3 py-2 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-500/25">Terraformar</button>
+            <button id="chaosBtn" class="rounded-xl border border-rose-400/30 bg-rose-500/15 px-3 py-2 text-sm font-semibold text-rose-200 transition hover:bg-rose-500/25">Liberar Caos</button>
+            <button id="universeBtn" class="rounded-xl border border-fuchsia-400/30 bg-fuchsia-500/15 px-3 py-2 text-sm font-semibold text-fuchsia-200 transition hover:bg-fuchsia-500/25">Criar Universo</button>
+            <button id="balanceBtn" class="rounded-xl border border-amber-400/30 bg-amber-500/15 px-3 py-2 text-sm font-semibold text-amber-200 transition hover:bg-amber-500/25">Restaurar Ordem</button>
+            <button id="resetBtn" class="rounded-xl border border-slate-600 bg-slate-800 px-3 py-2 text-sm font-semibold transition hover:bg-slate-700">Reiniciar Tudo</button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="glass relative min-h-0 overflow-hidden rounded-3xl">
+        <div class="absolute inset-x-0 top-0 z-20 flex flex-col gap-3 border-b border-slate-800/60 bg-slate-950/40 p-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="chip rounded-full px-3 py-1 text-xs font-semibold text-slate-300">Era: <span id="eraLabel">Amanhecer Microbiano</span></span>
+              <span class="chip rounded-full px-3 py-1 text-xs font-semibold text-slate-300">Modo: <span id="modeLabel">Observação Divina</span></span>
+              <span class="chip rounded-full px-3 py-1 text-xs font-semibold text-slate-300">Entidades: <span id="entityCount">0</span></span>
+            </div>
+            <h2 id="headline" class="mt-2 text-lg font-bold text-white md:text-xl">Clique no mundo para moldar a existência.</h2>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button data-tab="world" class="tab-btn active rounded-full border border-slate-700 bg-slate-800/90 px-4 py-2 text-sm font-semibold transition hover:bg-slate-700/90">Mundo</button>
+            <button data-tab="stats" class="tab-btn rounded-full border border-slate-700 bg-slate-800/90 px-4 py-2 text-sm font-semibold transition hover:bg-slate-700/90">Estatísticas</button>
+            <button data-tab="log" class="tab-btn rounded-full border border-slate-700 bg-slate-800/90 px-4 py-2 text-sm font-semibold transition hover:bg-slate-700/90">Crônicas</button>
+          </div>
+        </div>
+
+        <div class="absolute inset-0 pt-[104px] md:pt-[92px]">
+          <div id="tab-world" class="tab-panel h-full">
+            <div class="relative h-full w-full">
+              <canvas id="simCanvas" class="absolute inset-0 h-full w-full"></canvas>
+              <div id="fxLayer" class="pointer-events-none absolute inset-0"></div>
+              <div class="pointer-events-none absolute bottom-4 left-4 right-4 z-20 flex flex-wrap items-center gap-2">
+                <div class="chip rounded-full px-3 py-2 text-xs text-slate-300">Clique para aplicar poder</div>
+                <div class="chip rounded-full px-3 py-2 text-xs text-slate-300">Arraste para espalhar energia</div>
+                <div class="chip rounded-full px-3 py-2 text-xs text-slate-300">Roda do mouse para alterar intensidade</div>
+                <div id="intensityChip" class="chip rounded-full px-3 py-2 text-xs text-sky-300">Intensidade: 1</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="tab-stats" class="tab-panel hidden h-full overflow-auto p-4 md:p-5 scrollbar">
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div class="glass rounded-2xl p-4">
+                <div class="mb-3 text-sm font-bold text-white">Equilíbrio Planetário</div>
+                <div class="space-y-3" id="planetBars"></div>
+              </div>
+              <div class="glass rounded-2xl p-4">
+                <div class="mb-3 text-sm font-bold text-white">Ascensão da Vida</div>
+                <div class="space-y-3" id="lifeBars"></div>
+              </div>
+              <div class="glass rounded-2xl p-4">
+                <div class="mb-3 text-sm font-bold text-white">Escala Cósmica</div>
+                <div class="space-y-3" id="cosmicBars"></div>
+              </div>
+              <div class="glass rounded-2xl p-4 md:col-span-2 xl:col-span-3">
+                <div class="mb-3 text-sm font-bold text-white">Resumo do Reino</div>
+                <div id="summaryGrid" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="tab-log" class="tab-panel hidden h-full overflow-auto p-4 md:p-5 scrollbar">
+            <div class="glass rounded-2xl p-4">
+              <div class="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <div class="text-sm font-bold text-white">Crônicas Divinas</div>
+                  <div class="text-xs text-slate-400">Tudo que acontece no seu cosmos é registrado aqui.</div>
+                </div>
+                <button id="clearLogBtn" class="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm font-semibold transition hover:bg-slate-700">Limpar</button>
+              </div>
+              <div id="logList" class="space-y-2"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <aside class="glass scrollbar flex min-h-0 flex-col overflow-auto rounded-3xl p-4">
+        <div class="mb-4 rounded-2xl border border-slate-700/50 bg-slate-900/50 p-3">
+          <div class="mb-3 flex items-center justify-between">
+            <div>
+              <div class="text-xs uppercase tracking-[0.25em] text-slate-400">Estado Atual</div>
+              <div class="text-lg font-bold text-white">Painel do Criador</div>
+            </div>
+            <div class="rounded-full bg-indigo-400/10 px-3 py-1 text-xs font-semibold text-indigo-300">AO VIVO</div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div class="chip rounded-2xl p-3">
+              <div class="text-xs text-slate-400">População</div>
+              <div id="populationValue" class="mt-1 text-lg font-black text-white">0</div>
+            </div>
+            <div class="chip rounded-2xl p-3">
+              <div class="text-xs text-slate-400">Biodiversidade</div>
+              <div id="biodiversityValue" class="mt-1 text-lg font-black text-emerald-300">0%</div>
+            </div>
+            <div class="chip rounded-2xl p-3">
+              <div class="text-xs text-slate-400">Inteligência</div>
+              <div id="intelligenceValue" class="mt-1 text-lg font-black text-sky-300">0%</div>
+            </div>
+            <div class="chip rounded-2xl p-3">
+              <div class="text-xs text-slate-400">Ordem Cósmica</div>
+              <div id="orderValue" class="mt-1 text-lg font-black text-fuchsia-300">100%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-4 rounded-2xl border border-slate-700/50 bg-slate-900/50 p-3">
+          <div class="mb-3 text-sm font-bold text-white">Influência Divina</div>
+          <div class="space-y-3">
+            <label class="block">
+              <div class="mb-1 flex justify-between text-xs text-slate-400"><span>Temperatura</span><span id="tempText">15°C</span></div>
+              <input id="tempSlider" class="range w-full" type="range" min="-50" max="220" step="1" value="15">
+            </label>
+            <label class="block">
+              <div class="mb-1 flex justify-between text-xs text-slate-400"><span>Água</span><span id="waterText">55%</span></div>
+              <input id="waterSlider" class="range w-full" type="range" min="0" max="100" step="1" value="55">
+            </label>
+            <label class="block">
+              <div class="mb-1 flex justify-between text-xs text-slate-400"><span>Oxigênio</span><span id="oxygenText">21%</span></div>
+              <input id="oxygenSlider" class="range w-full" type="range" min="0" max="100" step="1" value="21">
+            </label>
+            <label class="block">
+              <div class="mb-1 flex justify-between text-xs text-slate-400"><span>Gravidade</span><span id="gravityText">1.0g</span></div>
+              <input id="gravitySlider" class="range w-full" type="range" min="0.2" max="3" step="0.1" value="1">
+            </label>
+          </div>
+        </div>
+
+        <div class="mb-4 rounded-2xl border border-slate-700/50 bg-slate-900/50 p-3">
+          <div class="mb-3 text-sm font-bold text-white">Espécies Dominantes</div>
+          <div id="speciesList" class="space-y-2"></div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-700/50 bg-slate-900/50 p-3">
+          <div class="mb-3 text-sm font-bold text-white">Missões Divinas</div>
+          <div id="missions" class="space-y-2"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const fxLayer = document.getElementById('fxLayer');
+
+    const scaleDefinitions = [
+      { key: 'micro', name: 'Bactérias', era: 'Amanhecer Microbiano', desc: 'A vida começa em colônias minúsculas.', density: 1.1, baseSize: 3 },
+      { key: 'creature', name: 'Criaturas', era: 'Selvageria Primordial', desc: 'Seres vivos exploram terra e água.', density: 0.85, baseSize: 8 },
+      { key: 'ecosystem', name: 'Ecossistema', era: 'Equilíbrio Vivo', desc: 'Florestas, oceanos e cadeias alimentares florescem.', density: 0.55, baseSize: 12 },
+      { key: 'civilization', name: 'Civilizações', era: 'Era das Mentes', desc: 'Cidades, cultura e tecnologia surgem.', density: 0.38, baseSize: 14 },
+      { key: 'planet', name: 'Planetas', era: 'Arquitetura Planetária', desc: 'Continentes, clima e luas podem ser moldados.', density: 0.22, baseSize: 18 },
+      { key: 'system', name: 'Sistemas', era: 'Mecânica Estelar', desc: 'Sóis e órbitas definem a dança cósmica.', density: 0.13, baseSize: 21 },
+      { key: 'galaxy', name: 'Galáxias', era: 'Oceanos de Estrelas', desc: 'Braços espirais e enxames colossais surgem.', density: 0.07, baseSize: 26 },
+      { key: 'universe', name: 'Universos', era: 'Tecelagem do Infinito', desc: 'Realidades inteiras nascem do seu toque.', density: 0.035, baseSize: 32 }
+    ];
+
+    const powerDefinitions = [
+      { key: 'life', name: 'Gerar Vida', cost: 8, color: '#22c55e' },
+      { key: 'water', name: 'Invocar Água', cost: 6, color: '#38bdf8' },
+      { key: 'heat', name: 'Fogo Estelar', cost: 7, color: '#fb7185' },
+      { key: 'evolve', name: 'Evolução', cost: 12, color: '#a78bfa' },
+      { key: 'chaos', name: 'Caos', cost: 16, color: '#f43f5e' },
+      { key: 'extinguish', name: 'Extinção', cost: 10, color: '#94a3b8' },
+      { key: 'gravity', name: 'Gravidade', cost: 9, color: '#f59e0b' },
+      { key: 'terraform', name: 'Terraformar', cost: 18, color: '#14b8a6' },
+      { key: 'universe', name: 'Big Bang', cost: 35, color: '#ec4899' },
+      { key: 'order', name: 'Restaurar Ordem', cost: 14, color: '#60a5fa' }
+    ];
+
+    const speciesCatalog = {
+      micro: ['Bactéria Solar', 'Archaea Azul', 'Esporo de Plasma', 'Amoeba Quântica'],
+      creature: ['Lagarto de Cristal', 'Peixe Celeste', 'Fera Vulcânica', 'Ave de Névoa'],
+      ecosystem: ['Bosque Luminar', 'Coral Eterno', 'Predador Eclipse', 'Herbívoros Titânicos'],
+      civilization: ['Clã da Aurora', 'Império Oceânico', 'Ordem de Silício', 'Cidade de Éter'],
+      planet: ['Mundo Jardim', 'Planeta Tempestade', 'Lua Viva', 'Superterra Rubra'],
+      system: ['Sol Ancião', 'Gigante Gasoso', 'Mundo Anelar', 'Cometa de Vida'],
+      galaxy: ['Galáxia Espiral', 'Enxame Estelar', 'Nebulosa Rainha', 'Halo Obscuro'],
+      universe: ['Universo Harmônico', 'Cosmo Fractal', 'Realidade Prisma', 'Vácuo Fecundo']
+    };
+
+    const missionsPool = [
+      { id: 'life100', text: 'Crie 100 formas de vida', check: s => s.totalCreated >= 100 },
+      { id: 'civRise', text: 'Alcance 55% de inteligência', check: s => s.intelligence >= 55 },
+      { id: 'biodiversity', text: 'Supere 70% de biodiversidade', check: s => s.biodiversity >= 70 },
+      { id: 'planetary', text: 'Mantenha a estabilidade acima de 80%', check: s => s.stability >= 80 },
+      { id: 'galactic', text: 'Crie ao menos 3 galáxias', check: s => s.byScale.galaxy >= 3 },
+      { id: 'multiverse', text: 'Crie 2 universos', check: s => s.byScale.universe >= 2 }
+    ];
+
+    const state = {
+      scale: 'micro',
+      power: 'life',
+      energy: 1000,
+      timeScale: 1,
+      paused: false,
+      intensity: 1,
+      age: 0,
+      totalCreated: 0,
+      chaosLevel: 8,
+      stability: 78,
+      order: 84,
+      temperature: 15,
+      water: 55,
+      oxygen: 21,
+      gravity: 1,
+      biodiversity: 8,
+      intelligence: 0,
+      population: 0,
+      universes: 0,
+      systems: 0,
+      galaxies: 0,
+      byScale: {
+        micro: 0,
+        creature: 0,
+        ecosystem: 0,
+        civilization: 0,
+        planet: 0,
+        system: 0,
+        galaxy: 0,
+        universe: 0
+      },
+      missions: missionsPool.map(m => ({ ...m, done: false })),
+      log: [],
+      stars: [],
+      particles: [],
+      entities: [],
+      pointerDown: false,
+      activeTab: 'world'
+    };
+
+    function $(id) {
+      return document.getElementById(id);
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function rand(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function pick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function formatNumber(value) {
+      return new Intl.NumberFormat('pt-BR').format(Math.round(value));
+    }
+
+    function normalizePercent(v) {
+      return Math.round(clamp(v, 0, 100));
+    }
+
+    function addLog(text, tone = 'sky') {
+      state.log.unshift({ text, time: new Date().toLocaleTimeString('pt-BR'), tone });
+      if (state.log.length > 60) state.log.length = 60;
+      renderLog();
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(rect.width * ratio);
+      canvas.height = Math.floor(rect.height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      generateStars();
+    }
+
+    function generateStars() {
+      const rect = canvas.getBoundingClientRect();
+      state.stars = Array.from({ length: Math.max(60, Math.floor((rect.width * rect.height) / 12000)) }, () => ({
+        x: Math.random() * rect.width,
+        y: Math.random() * rect.height,
+        size: Math.random() * 1.7 + 0.3,
+        alpha: Math.random() * 0.8 + 0.1,
+        speed: Math.random() * 0.05 + 0.02
+      }));
+    }
+
+    function renderButtons() {
+      const scaleWrap = $('scaleButtons');
+      const powerWrap = $('powerButtons');
+      scaleWrap.innerHTML = '';
+      powerWrap.innerHTML = '';
+
+      scaleDefinitions.forEach(scale => {
+        const btn = document.createElement('button');
+        btn.className = 'scale-btn rounded-xl border border-slate-700 bg-slate-800/90 px-3 py-2 text-left text-sm font-semibold transition hover:bg-slate-700/90';
+        if (state.scale === scale.key) btn.classList.add('active');
+        btn.innerHTML = `<div class="text-white">${scale.name}</div><div class="text-[11px] text-slate-400">${scale.era}</div>`;
+        btn.addEventListener('click', () => {
+          state.scale = scale.key;
+          $('scaleLabel').textContent = scale.name;
+          $('eraLabel').textContent = scale.era;
+          $('headline').textContent = scale.desc;
+          addLog(`Você concentrou sua visão divina na escala: ${scale.name}.`, 'sky');
+          renderButtons();
+        });
+        scaleWrap.appendChild(btn);
+      });
+
+      powerDefinitions.forEach(power => {
+        const btn = document.createElement('button');
+        btn.className = 'power-btn rounded-xl border border-slate-700 bg-slate-800/90 px-3 py-2 text-left text-sm font-semibold transition hover:bg-slate-700/90';
+        if (state.power === power.key) btn.classList.add('active');
+        btn.innerHTML = `<div class="text-white">${power.name}</div><div class="text-[11px] text-slate-400">Custo ${power.cost}</div>`;
+        btn.addEventListener('click', () => {
+          state.power = power.key;
+          $('powerLabel').textContent = power.name;
+          $('modeLabel').textContent = power.name;
+          renderButtons();
+        });
+        powerWrap.appendChild(btn);
+      });
+    }
+
+    function createEntity(x, y, scaleKey, powerKey = 'life') {
+      const rect = canvas.getBoundingClientRect();
+      const scale = scaleDefinitions.find(s => s.key === scaleKey);
+      const species = pick(speciesCatalog[scaleKey]);
+      const palette = {
+        micro: ['#22c55e', '#34d399', '#38bdf8', '#a78bfa'],
+        creature: ['#22c55e', '#f59e0b', '#fb7185', '#60a5fa'],
+        ecosystem: ['#10b981', '#14b8a6', '#84cc16', '#38bdf8'],
+        civilization: ['#fbbf24', '#c084fc', '#60a5fa', '#fb7185'],
+        planet: ['#38bdf8', '#22c55e', '#f97316', '#eab308'],
+        system: ['#fde68a', '#fb7185', '#93c5fd', '#c084fc'],
+        galaxy: ['#a78bfa', '#60a5fa', '#f472b6', '#fbbf24'],
+        universe: ['#e879f9', '#38bdf8', '#f472b6', '#ffffff']
+      };
+      const color = pick(palette[scaleKey]);
+      const size = scale.baseSize * rand(0.7, 1.5) * (0.85 + state.intensity * 0.18);
+      const e = {
+        id: crypto.randomUUID(),
+        scale: scaleKey,
+        species,
+        x: clamp(x + rand(-18, 18), 20, rect.width - 20),
+        y: clamp(y + rand(-18, 18), 20, rect.height - 20),
+        vx: rand(-0.6, 0.6),
+        vy: rand(-0.6, 0.6),
+        size,
+        hue: color,
+        power: powerKey,
+        energy: rand(35, 100),
+        age: 0,
+        intelligence: scaleKey === 'civilization' ? rand(30, 70) : scaleKey === 'universe' ? rand(60, 100) : rand(0, 25),
+        waterAffinity: rand(0, 1),
+        orbital: rand(0, Math.PI * 2),
+        fertility: rand(0.4, 1.3),
+        ring: Math.random() > 0.74,
+        children: 0
+      };
+      state.entities.push(e);
+      state.byScale[scaleKey] += 1;
+      state.totalCreated += 1;
+      if (scaleKey === 'universe') state.universes += 1;
+      if (scaleKey === 'system') state.systems += 1;
+      if (scaleKey === 'galaxy') state.galaxies += 1;
+      const basePop = {
+        micro: 1000,
+        creature: 240,
+        ecosystem: 12000,
+        civilization: 220000,
+        planet: 1000000,
+        system: 0,
+        galaxy: 0,
+        universe: 0
+      };
+      state.population += Math.round((basePop[scaleKey] || 0) * rand(0.5, 1.4));
+      state.biodiversity = clamp(state.biodiversity + rand(0.6, 2.2) * scale.density, 0, 100);
+      state.intelligence = clamp(state.intelligence + (scaleKey === 'civilization' ? rand(1.4, 4.3) : scaleKey === 'universe' ? rand(0.8, 1.6) : rand(0, 0.5)), 0, 100);
+      state.stability = clamp(state.stability + (powerKey === 'terraform' || powerKey === 'order' ? rand(1, 2.5) : rand(-0.6, 0.8)), 0, 100);
+      state.order = clamp(state.order + (powerKey === 'chaos' ? -rand(2, 4.5) : rand(0.2, 1.2)), 0, 100);
+      return e;
+    }
+
+    function spawnBurst(x, y, amount, scaleKey, powerKey) {
+      for (let i = 0; i < amount; i++) createEntity(x, y, scaleKey, powerKey);
+    }
+
+    function addFx(x, y, color = 'rgba(96,165,250,0.75)', size = 60) {
+      const ring = document.createElement('div');
+      ring.className = 'pulse-ring';
+      ring.style.left = `${x}px`;
+      ring.style.top = `${y}px`;
+      ring.style.width = `${size}px`;
+      ring.style.height = `${size}px`;
+      ring.style.borderColor = color;
+      fxLayer.appendChild(ring);
+      setTimeout(() => ring.remove(), 700);
+    }
+
+    function spendEnergy(cost) {
+      if (state.energy < cost) {
+        addLog('Seu poder divino enfraqueceu. Aguarde a energia se recompor.', 'amber');
+        return false;
+      }
+      state.energy -= cost;
+      return true;
+    }
+
+    function performPower(clientX, clientY, multi = 1) {
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      const power = powerDefinitions.find(p => p.key === state.power);
+      const amount = Math.max(1, Math.round((state.intensity + multi - 1) * (state.scale === 'micro' ? 7 : state.scale === 'creature' ? 4 : state.scale === 'ecosystem' ? 3 : 2)));
+      const totalCost = Math.max(1, Math.round(power.cost * (0.8 + state.intensity * 0.35) * multi));
+      if (!spendEnergy(totalCost)) return;
+
+      if (state.power === 'life') {
+        spawnBurst(x, y, amount, state.scale, 'life');
+        state.biodiversity = clamp(state.biodiversity + 1.2 * state.intensity, 0, 100);
+        addFx(x, y, 'rgba(34,197,94,0.6)', 55 + state.intensity * 16);
+        addLog(`Vida floresceu em ${pick(speciesCatalog[state.scale])}.`, 'emerald');
+      }
+
+      if (state.power === 'water') {
+        state.water = clamp(state.water + rand(1.4, 3.5) * state.intensity, 0, 100);
+        state.temperature = clamp(state.temperature - rand(0.2, 1.4) * state.intensity, -50, 220);
+        state.stability = clamp(state.stability + rand(0.4, 1.2), 0, 100);
+        if (Math.random() > 0.35) spawnBurst(x, y, Math.max(1, Math.round(amount * 0.7)), state.scale, 'water');
+        addFx(x, y, 'rgba(56,189,248,0.68)', 64 + state.intensity * 20);
+        addLog('Oceanos, mares e rios responderam ao seu chamado.', 'sky');
+      }
+
+      if (state.power === 'heat') {
+        state.temperature = clamp(state.temperature + rand(2, 6) * state.intensity, -50, 220);
+        state.water = clamp(state.water - rand(0.5, 2) * state.intensity, 0, 100);
+        state.chaosLevel = clamp(state.chaosLevel + rand(1.5, 4), 0, 100);
+        state.stability = clamp(state.stability - rand(0.3, 1.5), 0, 100);
+        addFx(x, y, 'rgba(251,113,133,0.72)', 70 + state.intensity * 20);
+        addLog('Chamas estelares consumiram a região e mudaram o destino da matéria.', 'rose');
+      }
+
+      if (state.power === 'evolve') {
+        const near = state.entities.filter(e => Math.hypot(e.x - x, e.y - y) < 120 + state.intensity * 10);
+        near.forEach(entity => {
+          entity.size *= rand(1.03, 1.18);
+          entity.energy += rand(8, 20);
+          entity.intelligence = clamp(entity.intelligence + rand(3, 12), 0, 100);
+          entity.children += Math.random() > 0.5 ? 1 : 0;
+          if (Math.random() > 0.6 && entity.scale !== 'universe') {
+            const currentIndex = scaleDefinitions.findIndex(s => s.key === entity.scale);
+            if (Math.random() > 0.72 && currentIndex < scaleDefinitions.length - 1) {
+              entity.scale = scaleDefinitions[currentIndex + 1].key;
+            }
+          }
+        });
+        state.intelligence = clamp(state.intelligence + rand(2.4, 6.8) * state.intensity, 0, 100);
+        state.biodiversity = clamp(state.biodiversity + rand(1.1, 3), 0, 100);
+        addFx(x, y, 'rgba(167,139,250,0.72)', 76 + state.intensity * 22);
+        addLog('Uma onda evolutiva atravessou a criação.', 'violet');
+      }
+
+      if (state.power === 'chaos') {
+        state.chaosLevel = clamp(state.chaosLevel + rand(5, 12) * state.intensity, 0, 100);
+        state.order = clamp(state.order - rand(3, 9), 0, 100);
+        state.stability = clamp(state.stability - rand(4, 10), 0, 100);
+        state.entities.forEach(e => {
+          if (Math.random() > 0.4) {
+            e.vx += rand(-1.6, 1.6);
+            e.vy += rand(-1.6, 1.6);
+          }
+        });
+        if (Math.random() > 0.55) {
+          const randomScale = pick(scaleDefinitions).key;
+          spawnBurst(x, y, Math.max(1, Math.round(amount * 0.8)), randomScale, 'chaos');
+        }
+        addFx(x, y, 'rgba(244,63,94,0.75)', 95 + state.intensity * 26);
+        addLog('Você rompeu a ordem e abriu rachaduras no destino.', 'rose');
+      }
+
+      if (state.power === 'extinguish') {
+        const before = state.entities.length;
+        state.entities = state.entities.filter(e => Math.hypot(e.x - x, e.y - y) > 95 + state.intensity * 16 || Math.random() > 0.55);
+        const removed = before - state.entities.length;
+        state.population = Math.max(0, state.population - removed * 8000 * state.intensity);
+        state.biodiversity = clamp(state.biodiversity - removed * 0.18, 0, 100);
+        state.stability = clamp(state.stability - rand(0.8, 2.3), 0, 100);
+        addFx(x, y, 'rgba(148,163,184,0.7)', 72 + state.intensity * 14);
+        addLog(`Uma extinção varreu ${removed} manifestações da existência.`, 'slate');
+      }
+
+      if (state.power === 'gravity') {
+        state.gravity = clamp(state.gravity + rand(-0.2, 0.4) * state.intensity, 0.2, 3);
+        state.entities.forEach(e => {
+          const dx = x - e.x;
+          const dy = y - e.y;
+          const d = Math.max(20, Math.hypot(dx, dy));
+          e.vx += (dx / d) * 0.5 * state.intensity;
+          e.vy += (dy / d) * 0.5 * state.intensity;
+        });
+        addFx(x, y, 'rgba(245,158,11,0.72)', 85 + state.intensity * 20);
+        addLog('As leis gravitacionais se curvaram diante da sua vontade.', 'amber');
+      }
+
+      if (state.power === 'terraform') {
+        state.water = clamp(state.water + rand(4, 8), 0, 100);
+        state.oxygen = clamp(state.oxygen + rand(1.5, 4), 0, 100);
+        state.temperature = clamp(state.temperature + rand(-3, 3), -50, 220);
+        state.stability = clamp(state.stability + rand(5, 10), 0, 100);
+        state.order = clamp(state.order + rand(2, 5), 0, 100);
+        spawnBurst(x, y, Math.max(1, Math.round(amount * 0.9)), state.scale, 'terraform');
+        addFx(x, y, 'rgba(20,184,166,0.75)', 105 + state.intensity * 26);
+        addLog('Você remodelou a matéria e preparou um mundo para prosperar.', 'teal');
+      }
+
+      if (state.power === 'universe') {
+        spawnBurst(x, y, Math.max(1, Math.round(state.intensity)), 'universe', 'universe');
+        if (Math.random() > 0.45) spawnBurst(x, y, Math.max(1, Math.round(state.intensity * 2)), 'galaxy', 'universe');
+        state.order = clamp(state.order + rand(-2, 4), 0, 100);
+        state.chaosLevel = clamp(state.chaosLevel + rand(1, 6), 0, 100);
+        addFx(x, y, 'rgba(236,72,153,0.78)', 130 + state.intensity * 36);
+        addLog('Um novo universo explodiu em possibilidades infinitas.', 'fuchsia');
+      }
+
+      if (state.power === 'order') {
+        state.chaosLevel = clamp(state.chaosLevel - rand(4, 11) * state.intensity, 0, 100);
+        state.order = clamp(state.order + rand(5, 10), 0, 100);
+        state.stability = clamp(state.stability + rand(4, 9), 0, 100);
+        state.entities.forEach(e => {
+          e.vx *= 0.8;
+          e.vy *= 0.8;
+        });
+        addFx(x, y, 'rgba(96,165,250,0.72)', 90 + state.intensity * 24);
+        addLog('A harmonia voltou a ecoar pelo cosmos.', 'sky');
+      }
+
+      updateFromSliders();
+      checkMissions();
+      renderHUD();
+    }
+
+    function updateFromSliders() {
+      $('tempSlider').value = state.temperature;
+      $('waterSlider').value = state.water;
+      $('oxygenSlider').value = state.oxygen;
+      $('gravitySlider').value = state.gravity;
+      $('tempText').textContent = `${Math.round(state.temperature)}°C`;
+      $('waterText').textContent = `${Math.round(state.water)}%`;
+      $('oxygenText').textContent = `${Math.round(state.oxygen)}%`;
+      $('gravityText').textContent = `${state.gravity.toFixed(1)}g`;
+    }
+
+    function applyEnvironmentEffects(dt) {
+      const lifeSupport = 100 - Math.abs(state.temperature - 22) * 0.55 - Math.abs(state.water - 60) * 0.28 - Math.abs(state.oxygen - 21) * 0.7 - Math.abs(state.gravity - 1) * 30;
+      const support = clamp(lifeSupport, 0, 100);
+      state.energy = clamp(state.energy + (0.9 + support * 0.012) * dt, 0, 2000);
+      state.stability = clamp(state.stability + (support > 55 ? 0.07 : -0.09) * dt, 0, 100);
+      state.biodiversity = clamp(state.biodiversity + (support > 60 ? 0.045 : -0.05) * dt + state.byScale.micro * 0.00005, 0, 100);
+      state.intelligence = clamp(state.intelligence + (state.byScale.civilization > 0 ? 0.03 : 0) * dt + (support > 45 ? 0.012 : -0.02) * dt, 0, 100);
+      state.order = clamp(state.order + (state.chaosLevel > 70 ? -0.08 : 0.04) * dt, 0, 100);
+      state.chaosLevel = clamp(state.chaosLevel + (Math.random() - 0.5) * 0.08 * dt, 0, 100);
+      state.population = Math.max(0, state.population + Math.round((support - 48) * state.entities.length * 0.015 * dt));
+      if (support < 28 && Math.random() < 0.03 * dt) {
+        state.population = Math.max(0, Math.round(state.population * 0.985));
+        if (state.entities.length && Math.random() > 0.5) state.entities.splice(Math.floor(Math.random() * state.entities.length), 1);
+      }
+    }
+
+    function updateEntities(dt) {
+      const rect = canvas.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const gravFactor = state.gravity * 0.035;
+      for (let i = state.entities.length - 1; i >= 0; i--) {
+        const e = state.entities[i];
+        e.age += dt;
+        const scaleIndex = scaleDefinitions.findIndex(s => s.key === e.scale);
+        const drift = 0.08 + scaleIndex * 0.015;
+        if (e.scale === 'planet' || e.scale === 'system' || e.scale === 'galaxy' || e.scale === 'universe') {
+          e.orbital += dt * (0.006 + scaleIndex * 0.0015) * (state.order / 80 + 0.25);
+          const orbitRadius = 36 + scaleIndex * 40 + Math.sin(e.id.length + e.age * 0.01) * 10;
+          const targetX = centerX + Math.cos(e.orbital + i * 0.2) * orbitRadius;
+          const targetY = centerY + Math.sin(e.orbital + i * 0.2) * orbitRadius * 0.72;
+          e.vx += (targetX - e.x) * 0.0008 * dt;
+          e.vy += (targetY - e.y) * 0.0008 * dt;
+        } else {
+          e.vx += (Math.random() - 0.5) * drift * dt;
+          e.vy += (Math.random() - 0.5) * drift * dt;
+        }
+
+        e.vx *= 0.992;
+        e.vy *= 0.992;
+        e.x += e.vx * dt * (1 + gravFactor * 0.4);
+        e.y += e.vy * dt * (1 + gravFactor * 0.4);
+
+        if (e.x < 10 || e.x > rect.width - 10) e.vx *= -1;
+        if (e.y < 10 || e.y > rect.height - 10) e.vy *= -1;
+        e.x = clamp(e.x, 10, rect.width - 10);
+        e.y = clamp(e.y, 10, rect.height - 10);
+
+        e.energy -= 0.01 * dt + Math.max(0, (Math.abs(state.temperature - 22) - 35) * 0.001 * dt);
+        if (Math.random() < 0.0008 * dt * e.fertility && state.entities.length < 1500) {
+          const child = { ...e, id: crypto.randomUUID(), x: e.x + rand(-12, 12), y: e.y + rand(-12, 12), size: e.size * rand(0.7, 0.95), age: 0, energy: rand(25, 55), children: 0 };
+          state.entities.push(child);
+          state.population += e.scale === 'civilization' ? 5000 : e.scale === 'creature' ? 200 : 40;
+          e.children += 1;
+        }
+        if (e.energy <= 0 || e.age > 2200 + scaleIndex * 600) {
+          if (Math.random() > 0.7) {
+            state.biodiversity = clamp(state.biodiversity - 0.02, 0, 100);
+            state.population = Math.max(0, state.population - (e.scale === 'civilization' ? 1000 : 40));
+          }
+          state.entities.splice(i, 1);
+        }
+      }
+    }
+
+    function drawBackground(rect) {
+      const gradient = ctx.createLinearGradient(0, 0, 0, rect.height);
+      const horizonShift = clamp((state.temperature + 50) / 270, 0, 1);
+      gradient.addColorStop(0, `rgba(${20 + horizonShift * 40}, ${26 + state.water * 0.8}, ${56 + state.oxygen * 1.1}, 1)`);
+      gradient.addColorStop(1, `rgba(${6 + state.chaosLevel * 0.6}, 10, ${24 + state.order * 0.4}, 1)`);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, rect.width, rect.height);
+
+      state.stars.forEach(star => {
+        star.alpha += (Math.random() - 0.5) * 0.015;
+        star.alpha = clamp(star.alpha, 0.08, 1);
+        ctx.fillStyle = `rgba(255,255,255,${star.alpha})`;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      const groundY = rect.height * 0.73;
+      ctx.fillStyle = `rgba(5,10,18,0.82)`;
+      ctx.fillRect(0, groundY, rect.width, rect.height - groundY);
+
+      const oceanHeight = rect.height * (0.08 + state.water * 0.0014);
+      const waterY = rect.height - oceanHeight;
+      const oceanGrad = ctx.createLinearGradient(0, waterY, 0, rect.height);
+      oceanGrad.addColorStop(0, `rgba(56,189,248,${0.18 + state.water * 0.003})`);
+      oceanGrad.addColorStop(1, `rgba(8,47,73,0.62)`);
+      ctx.fillStyle = oceanGrad;
+      ctx.fillRect(0, waterY, rect.width, rect.height - waterY);
+
+      const planetGlow = ctx.createRadialGradient(rect.width * 0.75, rect.height * 0.22, 10, rect.width * 0.75, rect.height * 0.22, 180);
+      planetGlow.addColorStop(0, `rgba(96,165,250,${0.16 + state.order * 0.002})`);
+      planetGlow.addColorStop(1, 'rgba(96,165,250,0)');
+      ctx.fillStyle = planetGlow;
+      ctx.fillRect(0, 0, rect.width, rect.height);
+    }
+
+    function drawEntity(e) {
+      const scaleIndex = scaleDefinitions.findIndex(s => s.key === e.scale);
+      const glow = Math.max(8, e.size * 2.6);
+      const g = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, glow);
+      g.addColorStop(0, `${e.hue}dd`);
+      g.addColorStop(0.35, `${e.hue}55`);
+      g.addColorStop(1, `${e.hue}00`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, glow, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.save();
+      ctx.translate(e.x, e.y);
+      ctx.rotate(e.orbital + e.age * 0.001);
+
+      if (e.scale === 'micro') {
+        ctx.fillStyle = e.hue;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, e.size, e.size * 0.55, Math.sin(e.age * 0.06), 0, Math.PI * 2);
+        ctx.fill();
+      } else if (e.scale === 'creature') {
+        ctx.fillStyle = e.hue;
+        ctx.beginPath();
+        ctx.moveTo(0, -e.size);
+        ctx.lineTo(e.size * 0.9, 0);
+        ctx.lineTo(0, e.size * 0.9);
+        ctx.lineTo(-e.size * 0.7, 0);
+        ctx.closePath();
+        ctx.fill();
+      } else if (e.scale === 'ecosystem') {
+        ctx.strokeStyle = e.hue;
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 5; i++) {
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(Math.cos((Math.PI * 2 * i) / 5) * e.size, Math.sin((Math.PI * 2 * i) / 5) * e.size);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(0, 0, e.size * 0.4, 0, Math.PI * 2);
+        ctx.fillStyle = e.hue;
+        ctx.fill();
+      } else if (e.scale === 'civilization') {
+        ctx.fillStyle = e.hue;
+        ctx.fillRect(-e.size * 0.65, -e.size * 0.65, e.size * 0.4, e.size * 1.3);
+        ctx.fillRect(-e.size * 0.1, -e.size, e.size * 0.45, e.size * 1.65);
+        ctx.fillRect(e.size * 0.4, -e.size * 0.45, e.size * 0.28, e.size * 1.1);
+      } else if (e.scale === 'planet') {
+        ctx.fillStyle = e.hue;
+        ctx.beginPath();
+        ctx.arc(0, 0, e.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.beginPath();
+        ctx.arc(-e.size * 0.25, -e.size * 0.3, e.size * 0.34, 0, Math.PI * 2);
+        ctx.fill();
+        if (e.ring) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, e.size * 1.7, e.size * 0.58, 0.25, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      } else if (e.scale === 'system') {
+        ctx.fillStyle = '#fde68a';
+        ctx.beginPath();
+        ctx.arc(0, 0, e.size * 0.75, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = `${e.hue}88`;
+        ctx.lineWidth = 1.4;
+        for (let r = 1; r <= 2; r++) {
+          ctx.beginPath();
+          ctx.arc(0, 0, e.size * (1.1 + r * 0.55), 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      } else if (e.scale === 'galaxy') {
+        ctx.strokeStyle = e.hue;
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 3; i++) {
+          ctx.beginPath();
+          ctx.ellipse(0, 0, e.size * (1 + i * 0.12), e.size * 0.42, i * 0.45 + e.age * 0.002, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(0, 0, e.size * 0.16, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (e.scale === 'universe') {
+        const u = ctx.createRadialGradient(0, 0, 0, 0, 0, e.size * 1.6);
+        u.addColorStop(0, '#ffffff');
+        u.addColorStop(0.16, e.hue);
+        u.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = u;
+        ctx.beginPath();
+        ctx.arc(0, 0, e.size * 1.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(0, 0, e.size, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function renderScene() {
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      drawBackground(rect);
+      state.entities.forEach(drawEntity);
+      drawOverlay(rect);
+    }
+
+    function drawOverlay(rect) {
+      const support = clamp(100 - Math.abs(state.temperature - 22) * 0.55 - Math.abs(state.water - 60) * 0.28 - Math.abs(state.oxygen - 21) * 0.7 - Math.abs(state.gravity - 1) * 30, 0, 100);
+      ctx.save();
+      ctx.fillStyle = 'rgba(15,23,42,0.35)';
+      ctx.roundRect(20, 20, 260, 116, 18);
+      ctx.fill();
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = '600 14px Inter, sans-serif';
+      ctx.fillText('Vitalidade do Reino', 38, 46);
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(`Suporte à vida: ${Math.round(support)}%`, 38, 69);
+      ctx.fillText(`Caos: ${Math.round(state.chaosLevel)}%`, 38, 89);
+      ctx.fillText(`Tempo: ${state.timeScale.toFixed(1)}x`, 38, 109);
+      ctx.fillText(`Idade: ${Math.floor(state.age)} eras`, 38, 129);
+      ctx.restore();
+    }
+
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        const radius = typeof r === 'number' ? { tl: r, tr: r, br: r, bl: r } : r;
+        this.beginPath();
+        this.moveTo(x + radius.tl, y);
+        this.lineTo(x + w - radius.tr, y);
+        this.quadraticCurveTo(x + w, y, x + w, y + radius.tr);
+        this.lineTo(x + w, y + h - radius.br);
+        this.quadraticCurveTo(x + w, y + h, x + w - radius.br, y + h);
+        this.lineTo(x + radius.bl, y + h);
+        this.quadraticCurveTo(x, y + h, x, y + h - radius.bl);
+        this.lineTo(x, y + radius.tl);
+        this.quadraticCurveTo(x, y, x + radius.tl, y);
+        this.closePath();
+      };
+    }
+
+    function renderBarGroup(targetId, items) {
+      const wrap = $(targetId);
+      wrap.innerHTML = items.map(item => `
+        <div>
+          <div class="mb-1 flex items-center justify-between text-xs text-slate-400"><span>${item.label}</span><span>${item.value}</span></div>
+          <div class="bar"><div style="width:${clamp(item.percent, 0, 100)}%;background:${item.color}"></div></div>
+        </div>
+      `).join('');
+    }
+
+    function renderSummary() {
+      const items = [
+        { label: 'Bactérias', value: formatNumber(state.byScale.micro), color: 'text-emerald-300' },
+        { label: 'Criaturas', value: formatNumber(state.byScale.creature), color: 'text-lime-300' },
+        { label: 'Ecossistemas', value: formatNumber(state.byScale.ecosystem), color: 'text-teal-300' },
+        { label: 'Civilizações', value: formatNumber(state.byScale.civilization), color: 'text-sky-300' },
+        { label: 'Planetas', value: formatNumber(state.byScale.planet), color: 'text-amber-300' },
+        { label: 'Sistemas', value: formatNumber(state.byScale.system), color: 'text-orange-300' },
+        { label: 'Galáxias', value: formatNumber(state.byScale.galaxy), color: 'text-violet-300' },
+        { label: 'Universos', value: formatNumber(state.byScale.universe), color: 'text-fuchsia-300' }
+      ];
+      $('summaryGrid').innerHTML = items.map(item => `
+        <div class="chip rounded-2xl p-4">
+          <div class="text-xs text-slate-400">${item.label}</div>
+          <div class="mt-2 text-2xl font-black ${item.color}">${item.value}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderSpecies() {
+      const counts = {};
+      state.entities.forEach(e => {
+        counts[e.species] = (counts[e.species] || 0) + 1;
+      });
+      const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+      $('speciesList').innerHTML = top.length ? top.map(([name, count], index) => `
+        <div class="chip rounded-2xl p-3">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="text-sm font-semibold text-white">${index + 1}. ${name}</div>
+              <div class="text-xs text-slate-400">Presença dominante</div>
+            </div>
+            <div class="text-lg font-black text-sky-300">${formatNumber(count)}</div>
+          </div>
+        </div>
+      `).join('') : '<div class="rounded-2xl border border-dashed border-slate-700 p-4 text-sm text-slate-400">Nenhuma espécie dominante ainda. Crie vida para começar.</div>';
+    }
+
+    function renderMissions() {
+      $('missions').innerHTML = state.missions.map(m => `
+        <div class="chip rounded-2xl p-3 ${m.done ? 'border-emerald-400/30 bg-emerald-500/10' : ''}">
+          <div class="flex items-start gap-3">
+            <div class="mt-0.5 h-4 w-4 rounded-full ${m.done ? 'bg-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.8)]' : 'bg-slate-700'}"></div>
+            <div>
+              <div class="text-sm font-semibold ${m.done ? 'text-emerald-200' : 'text-white'}">${m.text}</div>
+              <div class="text-xs text-slate-400">${m.done ? 'Concluída' : 'Em andamento'}</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderLog() {
+      $('logList').innerHTML = state.log.length ? state.log.map(entry => `
+        <div class="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-sm text-${entry.tone}-300">${entry.text}</div>
+            <div class="text-[11px] text-slate-500">${entry.time}</div>
+          </div>
+        </div>
+      `).join('') : '<div class="rounded-2xl border border-dashed border-slate-700 p-5 text-sm text-slate-400">Ainda não há crônicas. Comece a moldar o universo.</div>';
+    }
+
+    function computeByScaleLive() {
+      const counts = {
+        micro: 0,
+        creature: 0,
+        ecosystem: 0,
+        civilization: 0,
+        planet: 0,
+        system: 0,
+        galaxy: 0,
+        universe: 0
+      };
+      state.entities.forEach(e => {
+        counts[e.scale] = (counts[e.scale] || 0) + 1;
+      });
+      return counts;
+    }
+
+    function renderHUD() {
+      const liveCounts = computeByScaleLive();
+      state.byScale = { ...state.byScale, ...liveCounts };
+      $('energyValue').textContent = formatNumber(state.energy);
+      $('entityCount').textContent = formatNumber(state.entities.length);
+      $('populationValue').textContent = formatNumber(state.population);
+      $('biodiversityValue').textContent = `${normalizePercent(state.biodiversity)}%`;
+      $('intelligenceValue').textContent = `${normalizePercent(state.intelligence)}%`;
+      $('orderValue').textContent = `${normalizePercent(state.order)}%`;
+      $('timeValue').textContent = `${state.timeScale.toFixed(1)}x`;
+      $('intensityChip').textContent = `Intensidade: ${state.intensity}`;
+      updateFromSliders();
+      renderBarGroup('planetBars', [
+        { label: 'Temperatura', value: `${Math.round(state.temperature)}°C`, percent: ((state.temperature + 50) / 270) * 100, color: 'linear-gradient(90deg,#60a5fa,#fb7185)' },
+        { label: 'Água', value: `${Math.round(state.water)}%`, percent: state.water, color: 'linear-gradient(90deg,#0ea5e9,#38bdf8)' },
+        { label: 'Oxigênio', value: `${Math.round(state.oxygen)}%`, percent: state.oxygen, color: 'linear-gradient(90deg,#22c55e,#86efac)' },
+        { label: 'Gravidade', value: `${state.gravity.toFixed(1)}g`, percent: (state.gravity / 3) * 100, color: 'linear-gradient(90deg,#f59e0b,#fbbf24)' },
+        { label: 'Estabilidade', value: `${Math.round(state.stability)}%`, percent: state.stability, color: 'linear-gradient(90deg,#14b8a6,#34d399)' }
+      ]);
+      renderBarGroup('lifeBars', [
+        { label: 'Biodiversidade', value: `${Math.round(state.biodiversity)}%`, percent: state.biodiversity, color: 'linear-gradient(90deg,#22c55e,#bef264)' },
+        { label: 'Inteligência', value: `${Math.round(state.intelligence)}%`, percent: state.intelligence, color: 'linear-gradient(90deg,#38bdf8,#818cf8)' },
+        { label: 'População', value: formatNumber(state.population), percent: Math.min(100, Math.log10(Math.max(10, state.population)) * 14), color: 'linear-gradient(90deg,#f59e0b,#fb7185)' },
+        { label: 'Criações Totais', value: formatNumber(state.totalCreated), percent: Math.min(100, state.totalCreated / 6), color: 'linear-gradient(90deg,#c084fc,#e879f9)' }
+      ]);
+      renderBarGroup('cosmicBars', [
+        { label: 'Ordem', value: `${Math.round(state.order)}%`, percent: state.order, color: 'linear-gradient(90deg,#60a5fa,#a78bfa)' },
+        { label: 'Caos', value: `${Math.round(state.chaosLevel)}%`, percent: state.chaosLevel, color: 'linear-gradient(90deg,#fb7185,#f43f5e)' },
+        { label: 'Galáxias', value: formatNumber(state.byScale.galaxy), percent: Math.min(100, state.byScale.galaxy * 10), color: 'linear-gradient(90deg,#a78bfa,#f472b6)' },
+        { label: 'Universos', value: formatNumber(state.byScale.universe), percent: Math.min(100, state.byScale.universe * 50), color: 'linear-gradient(90deg,#f472b6,#ffffff)' }
+      ]);
+      renderSummary();
+      renderSpecies();
+      renderMissions();
+    }
+
+    function checkMissions() {
+      state.missions.forEach(m => {
+        if (!m.done && m.check(state)) {
+          m.done = true;
+          state.energy = clamp(state.energy + 120, 0, 2000);
+          addLog(`Missão concluída: ${m.text}. Recompensa: +120 poder divino.`, 'emerald');
+        }
+      });
+    }
+
+    function setupTabs() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.dataset.tab;
+          state.activeTab = tab;
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+          document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+          $(`tab-${tab}`).classList.remove('hidden');
+        });
+      });
+    }
+
+    function bindControls() {
+      $('timeSlider').addEventListener('input', e => {
+        state.timeScale = parseFloat(e.target.value);
+        renderHUD();
+      });
+      $('pauseBtn').addEventListener('click', () => {
+        state.paused = !state.paused;
+        $('pauseBtn').textContent = state.paused ? 'Retomar' : 'Pausar';
+        addLog(state.paused ? 'O tempo foi congelado.' : 'O tempo voltou a fluir.', 'sky');
+      });
+      $('boostBtn').addEventListener('click', () => {
+        state.timeScale = clamp(state.timeScale + 0.8, 0.2, 6);
+        $('timeSlider').value = state.timeScale;
+        renderHUD();
+        addLog('Uma era inteira foi comprimida em instantes.', 'violet');
+      });
+      $('seedLifeBtn').addEventListener('click', () => {
+        state.power = 'life';
+        state.scale = 'micro';
+        renderButtons();
+        const rect = canvas.getBoundingClientRect();
+        performPower(rect.width * 0.5 + rect.left, rect.height * 0.6 + rect.top, 1.6);
+      });
+      $('terraformBtn').addEventListener('click', () => {
+        state.power = 'terraform';
+        renderButtons();
+        const rect = canvas.getBoundingClientRect();
+        performPower(rect.width * 0.5 + rect.left, rect.height * 0.58 + rect.top, 1.8);
+      });
+      $('chaosBtn').addEventListener('click', () => {
+        state.power = 'chaos';
+        renderButtons();
+        const rect = canvas.getBoundingClientRect();
+        performPower(rect.width * 0.5 + rect.left, rect.height * 0.42 + rect.top, 1.5);
+      });
+      $('universeBtn').addEventListener('click', () => {
+        state.power = 'universe';
+        state.scale = 'universe';
+        renderButtons();
+        const rect = canvas.getBoundingClientRect();
+        performPower(rect.width * 0.52 + rect.left, rect.height * 0.32 + rect.top, 1.6);
+      });
+      $('balanceBtn').addEventListener('click', () => {
+        state.power = 'order';
+        renderButtons();
+        const rect = canvas.getBoundingClientRect();
+        performPower(rect.width * 0.5 + rect.left, rect.height * 0.5 + rect.top, 1.5);
+      });
+      $('resetBtn').addEventListener('click', initWorld);
+      $('clearLogBtn').addEventListener('click', () => {
+        state.log = [];
+        renderLog();
+      });
+      $('saveBtn').addEventListener('click', saveWorld);
+      $('loadBtn').addEventListener('click', loadWorld);
+
+      const sliders = [
+        ['tempSlider', 'temperature', v => `${v}°C`],
+        ['waterSlider', 'water', v => `${v}%`],
+        ['oxygenSlider', 'oxygen', v => `${v}%`],
+        ['gravitySlider', 'gravity', v => `${parseFloat(v).toFixed(1)}g`]
+      ];
+      sliders.forEach(([id, key]) => {
+        $(id).addEventListener('input', e => {
+          state[key] = parseFloat(e.target.value);
+          updateFromSliders();
+          renderHUD();
+        });
+      });
+
+      canvas.addEventListener('pointerdown', e => {
+        state.pointerDown = true;
+        performPower(e.clientX, e.clientY, 1);
+      });
+      window.addEventListener('pointerup', () => state.pointerDown = false);
+      canvas.addEventListener('pointermove', e => {
+        if (state.pointerDown) performPower(e.clientX, e.clientY, 0.45);
+      });
+      canvas.addEventListener('wheel', e => {
+        e.preventDefault();
+        state.intensity = clamp(state.intensity + (e.deltaY < 0 ? 1 : -1), 1, 8);
+        renderHUD();
+      }, { passive: false });
+
+      window.addEventListener('keydown', e => {
+        if (e.key === ' ') {
+          e.preventDefault();
+          state.paused = !state.paused;
+          $('pauseBtn').textContent = state.paused ? 'Retomar' : 'Pausar';
+        }
+        if (e.key.toLowerCase() === 's') saveWorld();
+        if (e.key.toLowerCase() === 'l') loadWorld();
+        if (e.key === 'ArrowUp') state.intensity = clamp(state.intensity + 1, 1, 8);
+        if (e.key === 'ArrowDown') state.intensity = clamp(state.intensity - 1, 1, 8);
+        renderHUD();
+      });
+
+      window.addEventListener('resize', resizeCanvas);
+    }
+
+    function saveWorld() {
+      const safeState = JSON.stringify({
+        scale: state.scale,
+        power: state.power,
+        energy: state.energy,
+        timeScale: state.timeScale,
+        intensity: state.intensity,
+        age: state.age,
+        totalCreated: state.totalCreated,
+        chaosLevel: state.chaosLevel,
+        stability: state.stability,
+        order: state.order,
+        temperature: state.temperature,
+        water: state.water,
+        oxygen: state.oxygen,
+        gravity: state.gravity,
+        biodiversity: state.biodiversity,
+        intelligence: state.intelligence,
+        population: state.population,
+        universes: state.universes,
+        systems: state.systems,
+        galaxies: state.galaxies,
+        byScale: state.byScale,
+        missions: state.missions,
+        log: state.log,
+        entities: state.entities
+      });
+      localStorage.setItem('deus-simulador-supremo', safeState);
+      addLog('O cosmos foi selado no arquivo eterno.', 'emerald');
+    }
+
+    function loadWorld() {
+      const raw = localStorage.getItem('deus-simulador-supremo');
+      if (!raw) {
+        addLog('Nenhum mundo salvo foi encontrado no vazio.', 'amber');
+        return;
+      }
+      const data = JSON.parse(raw);
+      Object.assign(state, data);
+      state.pointerDown = false;
+      state.activeTab = 'world';
+      $('timeSlider').value = state.timeScale;
+      $('scaleLabel').textContent = scaleDefinitions.find(s => s.key === state.scale)?.name || 'Bactérias';
+      $('eraLabel').textContent = scaleDefinitions.find(s => s.key === state.scale)?.era || 'Amanhecer Microbiano';
+      $('powerLabel').textContent = powerDefinitions.find(p => p.key === state.power)?.name || 'Gerar Vida';
+      $('modeLabel').textContent = powerDefinitions.find(p => p.key === state.power)?.name || 'Observação Divina';
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'world'));
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+      $('tab-world').classList.remove('hidden');
+      updateFromSliders();
+      renderButtons();
+      renderHUD();
+      renderLog();
+      addLog('Um mundo antigo retornou ao presente.', 'violet');
+    }
+
+    function initWorld() {
+      state.scale = 'micro';
+      state.power = 'life';
+      state.energy = 1000;
+      state.timeScale = 1;
+      state.paused = false;
+      state.intensity = 1;
+      state.age = 0;
+      state.totalCreated = 0;
+      state.chaosLevel = 8;
+      state.stability = 78;
+      state.order = 84;
+      state.temperature = 15;
+      state.water = 55;
+      state.oxygen = 21;
+      state.gravity = 1;
+      state.biodiversity = 8;
+      state.intelligence = 0;
+      state.population = 0;
+      state.universes = 0;
+      state.systems = 0;
+      state.galaxies = 0;
+      state.byScale = { micro: 0, creature: 0, ecosystem: 0, civilization: 0, planet: 0, system: 0, galaxy: 0, universe: 0 };
+      state.missions = missionsPool.map(m => ({ ...m, done: false }));
+      state.log = [];
+      state.entities = [];
+      $('pauseBtn').textContent = 'Pausar';
+      $('timeSlider').value = 1;
+      $('headline').textContent = 'Clique no mundo para moldar a existência.';
+      $('scaleLabel').textContent = 'Bactérias';
+      $('eraLabel').textContent = 'Amanhecer Microbiano';
+      $('powerLabel').textContent = 'Gerar Vida';
+      $('modeLabel').textContent = 'Observação Divina';
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'world'));
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+      $('tab-world').classList.remove('hidden');
+      renderButtons();
+      updateFromSliders();
+      renderLog();
+      addLog('Um novo vazio fértil aguarda sua primeira ordem.', 'sky');
+      const rect = canvas.getBoundingClientRect();
+      spawnBurst(rect.width * 0.5, rect.height * 0.7, 18, 'micro', 'life');
+      renderHUD();
+    }
+
+    let lastTime = performance.now();
+    function loop(now) {
+      const rawDt = (now - lastTime) / 16.666;
+      lastTime = now;
+      const dt = clamp(rawDt, 0.1, 3) * state.timeScale;
+      if (!state.paused) {
+        state.age += dt * 0.12;
+        applyEnvironmentEffects(dt);
+        updateEntities(dt);
+        if (Math.random() < 0.0035 * dt && state.entities.length < 1100) {
+          const rect = canvas.getBoundingClientRect();
+          const randomScale = Math.random() > 0.88 ? pick(['planet', 'system', 'galaxy']) : state.scale;
+          createEntity(rand(40, rect.width - 40), rand(60, rect.height - 40), randomScale, 'ambient');
+        }
+        if (Math.random() < 0.002 * dt) {
+          const ambientEvents = [
+            'Tempestades cósmicas alteraram o equilíbrio do céu.',
+            'Uma nova linhagem surgiu nas profundezas do mundo.',
+            'Fragmentos de matéria exótica atravessaram o vazio.',
+            'Antigas criaturas mudaram de forma diante do tempo.',
+            'Uma maré gravitacional redesenhou destinos.'
+          ];
+          addLog(pick(ambientEvents), 'sky');
+        }
+        checkMissions();
+        renderHUD();
+      }
+      renderScene();
+      requestAnimationFrame(loop);
+    }
+
+    setupTabs();
+    bindControls();
+    resizeCanvas();
+    renderButtons();
+    updateFromSliders();
+    initWorld();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
