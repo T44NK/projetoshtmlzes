@@ -1,0 +1,3385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathSpace Academy | Plataforma Educacional de Matemática Avançada</title>
+    
+    <!-- KaTeX CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+    <style>
+        /* ============================================
+           CSS VARIABLES & ROOT CONFIGURATION
+           ============================================ */
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-tertiary: #1f2937;
+            --bg-card: rgba(31, 41, 55, 0.7);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --border-color: rgba(75, 85, 99, 0.4);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            --sidebar-width: 280px;
+            --header-height: 64px;
+            --transition-fast: 150ms ease;
+            --transition-normal: 300ms ease;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* ============================================
+           RESET & BASE STYLES
+           ============================================ */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Background gradient effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(16, 185, 129, 0.03) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* ============================================
+           TYPOGRAPHY
+           ============================================ */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        h1 { font-size: 2.5rem; }
+        h2 { font-size: 2rem; }
+        h3 { font-size: 1.5rem; }
+        h4 { font-size: 1.25rem; }
+
+        p { color: var(--text-secondary); }
+
+        code {
+            font-family: var(--font-mono);
+            background: var(--bg-tertiary);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--accent-primary);
+        }
+
+        /* ============================================
+           LAYOUT STRUCTURE
+           ============================================ */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ============================================
+           SIDEBAR NAVIGATION
+           ============================================ */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            transition: transform var(--transition-normal);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-subtitle {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Search Box */
+        .search-box {
+            padding: 1rem 1.5rem;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.65rem 1rem 0.65rem 2.5rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        /* Navigation Menu */
+        .nav-menu {
+            flex: 1;
+            padding: 0.75rem 0;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-section-title {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(59, 130, 246, 0.08);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--accent-primary);
+            border-left-color: var(--accent-primary);
+        }
+
+        .nav-item-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .nav-item-badge {
+            margin-left: auto;
+            background: var(--accent-primary);
+            color: white;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        /* Sidebar Footer */
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .mode-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .mode-toggle:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .mode-toggle-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            width: 48px;
+            height: 26px;
+            background: var(--bg-primary);
+            border-radius: 13px;
+            position: relative;
+            transition: all var(--transition-fast);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: all var(--transition-fast);
+        }
+
+        .toggle-switch.active {
+            background: var(--accent-primary);
+        }
+
+        .toggle-switch.active::after {
+            left: 25px;
+            background: white;
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1100;
+            width: 44px;
+            height: 44px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        /* ============================================
+           MAIN CONTENT AREA
+           ============================================ */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            height: var(--header-height);
+            background: rgba(17, 24, 39, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            z-index: 100;
+        }
+
+        .header-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-primary);
+        }
+
+        .btn-icon {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .btn-icon:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-color: var(--accent-primary);
+        }
+
+        /* Content Sections */
+        .content-wrapper {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+            position: relative;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            color: var(--accent-primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-description {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            color: var(--text-secondary);
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Module Cards Grid */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .module-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all var(--transition-normal);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            opacity: 0;
+            transition: opacity var(--transition-normal);
+        }
+
+        .module-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .module-card:hover::before {
+            opacity: 1;
+        }
+
+        .module-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .module-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .module-level {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .level-highschool {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-success);
+        }
+
+        .level-university {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-secondary);
+        }
+
+        .level-advanced {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-warning);
+        }
+
+        .module-card h3 {
+            font-size: 1.15rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .module-card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .module-topics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .topic-tag {
+            font-size: 0.75rem;
+            padding: 0.3rem 0.6rem;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            color: var(--text-secondary);
+        }
+
+        /* ============================================
+           VISUALIZER SECTIONS
+           ============================================ */
+        .visualizer-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-top: 2rem;
+        }
+
+        .visualizer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .visualizer-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .visualizer-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .text-input {
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            min-width: 200px;
+            transition: all var(--transition-fast);
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            background: var(--bg-primary);
+        }
+
+        .canvas-wrapper canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .preset-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            padding: 0.4rem 0.8rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: var(--font-mono);
+        }
+
+        .preset-btn:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+        }
+
+        /* Slider Controls */
+        .slider-control {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .slider-control label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            min-width: 60px;
+        }
+
+        .slider {
+            width: 120px;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--bg-primary);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform var(--transition-fast);
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .slider-value {
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            min-width: 40px;
+            font-family: var(--font-mono);
+        }
+
+        /* Color Picker */
+        .color-picker {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        /* ============================================
+           CONTENT MODULES (Educational)
+           ============================================ */
+        .module-content {
+            padding: 2rem 0;
+        }
+
+        .concept-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .concept-block h3 {
+            color: var(--accent-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .formula-display {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            text-align: center;
+        }
+
+        .example-step {
+            background: var(--bg-tertiary);
+            border-left: 3px solid var(--accent-success);
+            padding: 1rem 1.25rem;
+            margin: 0.75rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .example-step h4 {
+            color: var(--accent-success);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Tabs for sub-sections */
+        .tabs-container {
+            margin-top: 1.5rem;
+        }
+
+        .tabs-header {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            cursor: pointer;
+            position: relative;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-primary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* ============================================
+           MODAL COMPONENT
+           ============================================ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h3 {
+            font-size: 1.25rem;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-tertiary);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-size: 1.25rem;
+        }
+
+        .modal-close:hover {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-body ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .modal-body li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .modal-body li:last-child {
+            border-bottom: none;
+        }
+
+        .modal-body li::before {
+            content: '✓';
+            color: var(--accent-success);
+            font-weight: bold;
+        }
+
+        /* ============================================
+           TOOLTIP
+           ============================================ */
+        [data-tooltip] {
+            position: relative;
+        }
+
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--transition-fast);
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(-4px);
+        }
+
+        /* ============================================
+           RESPONSIVE DESIGN
+           ============================================ */
+        @media (max-width: 1024px) {
+            :root {
+                --sidebar-width: 260px;
+            }
+            
+            .modules-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: flex;
+            }
+            
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .header {
+                padding: 0 1rem;
+                padding-left: 4rem;
+            }
+            
+            .content-wrapper {
+                padding: 1rem;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .hero-stats {
+                gap: 1.5rem;
+            }
+            
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .visualizer-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .visualizer-controls {
+                justify-content: flex-start;
+            }
+            
+            .text-input {
+                min-width: 150px;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            html {
+                font-size: 14px;
+            }
+            
+            .hero {
+                padding: 2rem 1rem;
+            }
+            
+            .hero h1 {
+                font-size: 1.75rem;
+            }
+            
+            .stat-value {
+                font-size: 1.75rem;
+            }
+        }
+
+        /* ============================================
+           ACCESSIBILITY
+           ============================================ */
+        :focus-visible {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Loading State */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--bg-tertiary);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Notification Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: var(--shadow-lg);
+            animation: slideInRight 0.3s ease;
+            max-width: 350px;
+        }
+
+        .toast.success { border-left: 3px solid var(--accent-success); }
+        .toast.error { border-left: 3px solid var(--accent-danger); }
+        .toast.info { border-left: 3px solid var(--accent-primary); }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- ============================================
+         MOBILE MENU TOGGLE
+         ============================================ -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Abrir menu">
+        ☰
+    </button>
+
+    <!-- ============================================
+         SIDEBAR NAVIGATION
+         ============================================ -->
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Menu principal">
+        <div class="sidebar-header">
+            <a href="#" class="logo" onclick="navigateTo('home')">
+                <div class="logo-icon">∫</div>
+                <div>
+                    <div class="logo-text">MathSpace</div>
+                    <div class="logo-subtitle">Academy</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="searchInput" placeholder="Buscar tópicos..." aria-label="Buscar tópicos">
+        </div>
+
+        <nav class="nav-menu" id="navMenu">
+            <div class="nav-section">
+                <div class="nav-section-title">🏠 Início</div>
+                <a class="nav-item active" data-section="home" onclick="navigateTo('home')">
+                    <span class="nav-item-icon">📊</span>
+                    Dashboard
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">📚 Ensino Médio</div>
+                <a class="nav-item" data-section="algebra" onclick="navigateTo('algebra')">
+                    <span class="nav-item-icon">🔢</span>
+                    Álgebra
+                    <span class="nav-item-badge">8</span>
+                </a>
+                <a class="nav-item" data-section="funcoes" onclick="navigateTo('funcoes')">
+                    <span class="nav-item-icon">📈</span>
+                    Funções
+                    <span class="nav-item-badge">12</span>
+                </a>
+                <a class="nav-item" data-section="geometria-analitica" onclick="navigateTo('geometria-analitica')">
+                    <span class="nav-item-icon">📐</span>
+                    Geometria Analítica
+                </a>
+                <a class="nav-item" data-section="matrizes" onclick="navigateTo('matrizes')">
+                    <span class="nav-item-icon">🔲</span>
+                    Matrizes & Determinantes
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">🎓 Ensino Superior</div>
+                <a class="nav-item" data-section="calculo" onclick="navigateTo('calculo')">
+                    <span class="nav-item-icon">∑</span>
+                    Cálculo Diferencial & Integral
+                </a>
+                <a class="nav-item" data-section="algebra-linear" onclick="navigateTo('algebra-linear')">
+                    <span class="nav-item-icon">⬡</span>
+                    Álgebra Linear
+                </a>
+                <a class="nav-item" data-section="equacoes-diferenciais" onclick="navigateTo('equacoes-diferenciais')">
+                    <span class="nav-item-icon">∂</span>
+                    Equações Diferenciais
+                </a>
+                <a class="nav-item" data-section="analise-complexa" onclick="navigateTo('analise-complexa')">
+                    <span class="nav-item-icon">ℂ</span>
+                    Análise Complexa
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">🎨 Visualizadores</div>
+                <a class="nav-item" data-section="graficos-2d" onclick="navigateTo('graficos-2d')">
+                    <span class="nav-item-icon">📊</span>
+                    Gráficos 2D
+                </a>
+                <a class="nav-item" data-section="graficos-3d" onclick="navigateTo('graficos-3d')">
+                    <span class="nav-item-icon">🧊</span>
+                    Superfícies 3D
+                </a>
+                <a class="nav-item" data-section="fractais" onclick="navigateTo('fractais')">
+                    <span class="nav-item-icon">🌀</span>
+                    Fractais
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="mode-toggle" id="modeToggle" role="switch" aria-checked="false" tabindex="0">
+                <span class="mode-toggle-label">Modo Avançado</span>
+                <div class="toggle-switch" id="toggleSwitch"></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ============================================
+         MAIN CONTENT
+         ============================================ -->
+    <main class="main-content" role="main">
+        <header class="header">
+            <h1 class="header-title" id="headerTitle">Dashboard</h1>
+            <div class="header-actions">
+                <button class="btn-icon" onclick="openModal('help')" data-tooltip="Ajuda" aria-label="Abrir ajuda">
+                    ❓
+                </button>
+                <button class="btn btn-primary" onclick="openModal('help')">
+                    Como Usar
+                </button>
+            </div>
+        </header>
+
+        <div class="content-wrapper">
+            <!-- HOME SECTION -->
+            <section class="section active" id="section-home">
+                <div class="hero">
+                    <div class="hero-badge">
+                        🚀 Plataforma Educativa Interativa
+                    </div>
+                    <h1>Explore o Universo da Matemática</h1>
+                    <p class="hero-description">
+                        Do Ensino Médio à Pós-Graduação: visualize conceitos abstratos, 
+                        explore gráficos interativos e domine a matemática com ferramentas profissionais.
+                    </p>
+                    <button class="btn btn-primary" onclick="navigateTo('graficos-2d')">
+                        🎨 Abrir Visualizador 2D
+                    </button>
+                    
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">15+</div>
+                            <div class="stat-label">Módulos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">200+</div>
+                            <div class="stat-label">Tópicos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">3</div>
+                            <div class="stat-label">Visualizadores</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">∞</div>
+                            <div class="stat-label">Possibilidades</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 style="margin-bottom: 1rem;">Módulos Disponíveis</h2>
+                <div class="modules-grid" id="modulesGrid">
+                    <!-- Modules will be rendered by JS -->
+                </div>
+            </section>
+
+            <!-- ALGEBRA SECTION -->
+            <section class="section" id="section-algebra">
+                <h2>Álgebra</h2>
+                <p style="margin-bottom: 1.5rem;">Fundamentos algébricos essenciais para o Ensino Médio.</p>
+                
+                <div class="tabs-container">
+                    <div class="tabs-header">
+                        <button class="tab-btn active" onclick="switchTab(this, 'alg-conceitos')">Conceitos</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'alg-exemplos')">Exemplos</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'alg-praticar')">Praticar</button>
+                    </div>
+                    
+                    <div class="tab-content active" id="alg-conceitos">
+                        <div class="concept-block">
+                            <h3>📌 Produtos Notáveis</h3>
+                            <p>Os produtos notáveis são identidades algébricas que facilitam cálculos:</p>
+                            
+                            <div class="formula-display">
+                                $$(a + b)^2 = a^2 + 2ab + b^2$$
+                                $$(a - b)^2 = a^2 - 2ab + b^2$$
+                                $$(a + b)(a - b) = a^2 - b^2$$
+                            </div>
+                        </div>
+
+                        <div class="concept-block">
+                            <h3>📌 Fatoração</h3>
+                            <p>Técnicas de fatoração de expressões polinomiais:</p>
+                            
+                            <div class="formula-display">
+                                $$ax + ay = a(x + y) \quad \text{(Fator comum)}$$
+                                $$x^2 - y^2 = (x+y)(x-y) \quad \text{(Diferença de quadrados)}$$
+                                $$x^2 + (a+b)x + ab = (x+a)(x+b) \quad \text{(Trinômio)}}$$
+                            </div>
+                        </div>
+
+                        <div class="concept-block">
+                            <h3>📌 Equações do 2º Grau</h3>
+                            <p>A equação quadrática na forma geral $ax^2 + bx + c = 0$ tem soluções dadas pela fórmula de Bhaskara:</p>
+                            
+                            <div class="formula-display">
+                                $$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
+                                
+                                Onde $\Delta = b^2 - 4ac$ é o discriminante:
+                                <ul style="margin-top: 0.5rem; color: var(--text-secondary);">
+                                    <li>$\Delta > 0$: Duas raízes reais distintas</li>
+                                    <li>$\Delta = 0$: Uma raiz real dupla</li>
+                                    <li>$\Delta < 0$: Duas raízes complexas conjugadas</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="alg-exemplos">
+                        <div class="example-step">
+                            <h4>Exemplo 1: Desenvolver $(2x + 3)^2$</h4>
+                            <div class="formula-display">
+                                $$(2x + 3)^2 = (2x)^2 + 2(2x)(3) + 3^2$$
+                                $$= 4x^2 + 12x + 9$$
+                            </div>
+                        </div>
+
+                        <div class="example-step">
+                            <h4>Exemplo 2: Resolver $x^2 - 5x + 6 = 0$</h4>
+                            <div class="formula-display">
+                                $$a = 1, \quad b = -5, \quad c = 6$$
+                                $$\Delta = (-5)^2 - 4(1)(6) = 25 - 24 = 1$$
+                                $$x = \frac{5 \pm \sqrt{1}}{2} = \frac{5 \pm 1}{2}$$
+                                $$x_1 = 3, \quad x_2 = 2$$
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="alg-praticar">
+                        <div class="concept-block">
+                            <h3>💡 Exercícios Sugeridos</h3>
+                            <ol style="color: var(--text-secondary); padding-left: 1.5rem;">
+                                <li>Fatore: $x^3 - 4x$</li>
+                                <li>Resolva: $2x^2 - 8x + 6 = 0$</li>
+                                <li>Simplifique: $\frac{x^2 - 9}{x + 3}$</li>
+                                <li>Desenvolva: $(3x - 2y)^2$</li>
+                            </ol>
+                            <p style="margin-top: 1rem; font-size: 0.9rem;">
+                                💡 Use o <strong>Visualizador 2D</strong> para verificar graficamente as raízes das equações!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FUNÇÕES SECTION -->
+            <section class="section" id="section-funcoes">
+                <h2>Funções</h2>
+                <p style="margin-bottom: 1.5rem;">Estudo completo dos principais tipos de funções matemáticas.</p>
+                
+                <div class="tabs-container">
+                    <div class="tabs-header">
+                        <button class="tab-btn active" onclick="switchTab(this, 'func-afim')">Função Afim</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'func-quadratica')">Quadrática</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'func-exp-log')">Exp & Log</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'func-trig')">Trigonométricas</button>
+                    </div>
+                    
+                    <div class="tab-content active" id="func-afim">
+                        <div class="concept-block">
+                            <h3>📈 Função Afim (1º Grau)</h3>
+                            <p>Uma função afim tem a forma $f(x) = ax + b$, onde:</p>
+                            <ul style="color: var(--text-secondary); padding-left: 1.5rem; margin: 0.5rem 0;">
+                                <li><strong>a</strong>: coeficiente angular (inclinação)</li>
+                                <li><strong>b</strong>: coeficiente linear (intercepto no eixo Y)</li>
+                            </ul>
+                            
+                            <div class="formula-display">
+                                $$f(x) = ax + b$$
+                                <br><br>
+                                Gráfico: Reta não vertical<br>
+                                Domínio: $\mathbb{R}$<br>
+                                Imagem: $\mathbb{R}$
+                            </div>
+                        </div>
+                        
+                        <div class="visualizer-container">
+                            <div class="visualizer-header">
+                                <span class="visualizer-title">📊 Visualização Interativa</span>
+                                <div class="visualizer-controls">
+                                    <div class="input-group">
+                                        <label>f(x) =</label>
+                                        <input type="text" class="text-input" id="funcAfimInput" value="2*x + 1" onchange="updateGraph2D()">
+                                    </div>
+                                    <div class="preset-buttons">
+                                        <button class="preset-btn" onclick="setFunction2D('x')">f(x)=x</button>
+                                        <button class="preset-btn" onclick="setFunction2D('2*x+1')">f(x)=2x+1</button>
+                                        <button class="preset-btn" onclick="setFunction2D('-x+3')">f(x)=-x+3</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="canvas-wrapper">
+                                <canvas id="graph2DCanvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="func-quadratica">
+                        <div class="concept-block">
+                            <h3>📈 Função Quadrática (2º Grau)</h3>
+                            <p>Forma geral: $f(x) = ax^2 + bx + c$, onde $a \neq 0$</p>
+                            
+                            <div class="formula-display">
+                                $$f(x) = ax^2 + bx + c = a(x - x_v)^2 + y_v$$
+                                <br><br>
+                                Vértice: $V(x_v, y_v)$ onde $x_v = \frac{-b}{2a}$<br>
+                                Eixo de simetria: $x = \frac{-b}{2a}$<br>
+                                Concavidade: para cima se $a > 0$, para baixo se $a < 0$
+                            </div>
+                        </div>
+                        
+                        <div class="visualizer-container">
+                            <div class="visualizer-header">
+                                <span class="visualizer-title">📊 Parábola Interativa</span>
+                                <div class="visualizer-controls">
+                                    <div class="input-group">
+                                        <label>f(x) =</label>
+                                        <input type="text" class="text-input" id="funcQuadInput" value="x^2 - 2*x - 3" onchange="updateGraph2D()">
+                                    </div>
+                                    <div class="preset-buttons">
+                                        <button class="preset-btn" onclick="setFunction2D('x^2')">x²</button>
+                                        <button class="preset-btn" onclick="setFunction2D('-x^2+4')">-x²+4</button>
+                                        <button class="preset-btn" onclick="setFunction2D('x^2-2*x-3')">x²-2x-3</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="canvas-wrapper">
+                                <canvas id="graphQuadCanvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="func-exp-log">
+                        <div class="concept-block">
+                            <h3>📈 Funções Exponenciais e Logarítmicas</h3>
+                            
+                            <div class="formula-display">
+                                <strong>Exponencial:</strong> $f(x) = a^x$ onde $a > 0$, $a \neq 1$
+                                <br><br>
+                                <strong>Logarítmica:</strong> $f(x) = \log_a(x)$ onde $a > 0$, $a \neq 1$
+                                <br><br>
+                                São funções inversas: $\log_a(a^x) = x$ e $a^{\log_a(x)} = x$
+                            </div>
+                        </div>
+                        
+                        <div class="visualizer-container">
+                            <div class="visualizer-header">
+                                <span class="visualizer-title">📊 Exp & Log</span>
+                                <div class="visualizer-controls">
+                                    <div class="input-group">
+                                        <label>f(x) =</label>
+                                        <input type="text" class="text-input" id="funcExpInput" value="exp(x)" onchange="updateGraph2D()">
+                                    </div>
+                                    <div class="preset-buttons">
+                                        <button class="preset-btn" onclick="setFunction2D('exp(x)">eˣ</button>
+                                        <button class="preset-btn" onclick="setFunction2D('log(x)')">ln(x)</button>
+                                        <button class="preset-btn" onclick="setFunction2D('2^x')">2ˣ</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="canvas-wrapper">
+                                <canvas id="graphExpCanvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="func-trig">
+                        <div class="concept-block">
+                            <h3>📈 Funções Trigonométricas</h3>
+                            
+                            <div class="formula-display">
+                                $$\sin(x), \quad \cos(x), \quad \tan(x)$$
+                                <br><br>
+                                Período de $\sin$ e $\cos$: $2\pi$<br>
+                                Período de $\tan$: $\pi$<br>
+                                Identidade fundamental: $\sin^2(x) + \cos^2(x) = 1$
+                            </div>
+                        </div>
+                        
+                        <div class="visualizer-container">
+                            <div class="visualizer-header">
+                                <span class="visualizer-title">📊 Funções Trigonométricas</span>
+                                <div class="visualizer-controls">
+                                    <div class="input-group">
+                                        <label>f(x) =</label>
+                                        <input type="text" class="text-input" id="funcTrigInput" value="sin(x)" onchange="updateGraph2D()">
+                                    </div>
+                                    <div class="preset-buttons">
+                                        <button class="preset-btn" onclick="setFunction2D('sin(x)">sin(x)</button>
+                                        <button class="preset-btn" onclick="setFunction2D('cos(x)">cos(x)</button>
+                                        <button class="preset-btn" onclick="setFunction2D('tan(x)">tan(x)</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="canvas-wrapper">
+                                <canvas id="graphTrigCanvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GEOMETRIA ANALÍTICA SECTION -->
+            <section class="section" id="section-geometria-analitica">
+                <h2>Geometria Analítica</h2>
+                <p style="margin-bottom: 1.5rem;">O estudo da geometria através da álgebra e coordenadas cartesianas.</p>
+                
+                <div class="concept-block">
+                    <h3>📍 Distância Entre Dois Pontos</h3>
+                    <div class="formula-display">
+                        $$d(P_1, P_2) = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}$$
+                    </div>
+                </div>
+
+                <div class="concept-block">
+                    <h3>📐 Equação da Reta</h3>
+                    <div class="formula-display">
+                        Forma reduzida: $y = mx + n$ (onde $m$ é o coeficiente angular)<br><br>
+                        Forma geral: $ax + by + c = 0$<br><br>
+                        Forma segmentária: $\frac{x}{a} + \frac{y}{b} = 1$
+                    </div>
+                </div>
+
+                <div class="concept-block">
+                    <h3>⭕ Circunferência</h3>
+                    <div class="formula-display">
+                        Centro $(h, k)$ e raio $r$:<br><br>
+                        $$(x - h)^2 + (y - k)^2 = r^2$$
+                        <br><br>
+                        Forma geral: $x^2 + y^2 + ax + by + c = 0$
+                    </div>
+                </div>
+
+                <div class="concept-block">
+                    <h3>🔵 Elipse</h3>
+                    <div class="formula-display">
+                        Centro na origem:<br><br>
+                        $$\frac{x^2}{a^2} + \frac{y^2}{b^2} = 1$$
+                        <br>
+                        Onde $2a$ é o eixo maior e $2b$ é o eixo menor
+                    </div>
+                </div>
+
+                <div class="concept-block">
+                    <h3>🟤 Hipérbole</h3>
+                    <div class="formula-display">
+                        $$\frac{x^2}{a^2} - \frac{y^2}{b^2} = 1 \quad \text{(eixos coordenados)}$$
+                        Assíntotas: $y = \pm \frac{b}{a}x$
+                    </div>
+                </div>
+            </section>
+
+            <!-- MATRIZES SECTION -->
+            <section class="section" id="section-matrizes">
+                <h2>Matrizes e Determinantes</h2>
+                
+                <div class="concept-block">
+                    <h3>🔲 Definição de Matriz</h3>
+                    <p>Uma matriz de ordem $m \times n$ é uma tabela de elementos dispostos em $m$ linhas e $n$ colunas:</p>
+                    <div class="formula-display">
+                        $$A_{m \times n} = \begin{pmatrix}
+                        a_{11} & a_{12} & \cdots & a_{1n} \\
+                        a_{21} & a_{22} & \cdots & a_{2n} \\
+                        \vdots & \vdots & \ddots & \vdots \\
+                        a_{m1} & a_{m2} & \cdots & a_{mn}
+                        \end{pmatrix}$$
+                    </div>
+                </div>
+
+                <div class="concept-block">
+                    <h3>➕ Operações com Matrizes</h3>
+                    <div class="formula-display">
+                        <strong>Soma:</strong> $A + B = [a_{ij} + b_{ij}]$ (mesma ordem)<br><br>
+                        <strong>Multiplicação por escalar:</strong> $kA = [k \cdot a_{ij}]$<br><br>
+                        <strong>Produto:</strong> $(AB)_{ij} = \sum_{k} a_{ik} b_{kj}$ (colunas A = linhas B)
+                    </div>
+                </div>
+
+                <div class="concept-block">
+                    <h3>📊 Determinantes</h3>
+                    <div class="formula-display">
+                        Ordem 2: $\det(A) = \begin{vmatrix} a & b \\ c & d \end{vmatrix} = ad - bc$
+                        <br><br>
+                        Ordem 3 (Sarrus):<br>
+                        $\det(A) = aei + bfg + cdh - ceg - bdi - afh$
+                    </div>
+                </div>
+            </section>
+
+            <!-- CÁLCULO SECTION -->
+            <section class="section" id="section-calculo">
+                <h2>Cálculo Diferencial e Integral</h2>
+                
+                <div class="tabs-container">
+                    <div class="tabs-header">
+                        <button class="tab-btn active" onclick="switchTab(this, 'calc-limites')">Limites</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'calc-derivadas')">Derivadas</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'calc-integrais')">Integrais</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'calc-series')">Séries</button>
+                    </div>
+                    
+                    <div class="tab-content active" id="calc-limites">
+                        <div class="concept-block">
+                            <h3>📐 Conceito de Limite</h3>
+                            <div class="formula-display">
+                                $$\lim_{x \to a} f(x) = L$$
+                                <br><br>
+                                Significa que quando $x$ se aproxima de $a$, $f(x)$ se aproxima de $L$.
+                            </div>
+                        </div>
+
+                        <div class="concept-block">
+                            <h3>📋 Propriedades dos Limites</h3>
+                            <div class="formula-display">
+                                $$\lim_{x \to a}[f(x) \pm g(x)] = \lim_{x \to a}f(x) \pm \lim_{x \to a}g(x)$$
+                                $$\lim_{x \to a}[f(x) \cdot g(x)] = \lim_{x \to a}f(x) \cdot \lim_{x \to a}g(x)$$
+                                $$\lim_{x \to a}\frac{f(x)}{g(x)} = \frac{\lim_{x \to a}f(x)}{\lim_{x \to a}g(x)}, \quad g(x) \neq 0$$
+                            </div>
+                        </div>
+
+                        <div class="concept-block">
+                            <h3>♾️ Limites Importantes</h3>
+                            <div class="formula-display">
+                                $$\lim_{x \to 0}\frac{\sin x}{x} = 1$$
+                                $$\lim_{x \to \infty}\left(1 + \frac{1}{x}\right)^x = e$$
+                                $$\lim_{x \to 0}\frac{e^x - 1}{x} = 1$$
+                                $$\lim_{x \to 0}\frac{\ln(1+x)}{x} = 1$$
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="calc-derivadas">
+                        <div class="concept-block">
+                            <h3>📈 Definição de Derivada</h3>
+                            <div class="formula-display">
+                                $$f'(x) = \lim_{h \to 0}\frac{f(x+h) - f(x)}{h}$$
+                                <br><br>
+                                Representa a taxa de variação instantânea ou inclinação da tangente.
+                            </div>
+                        </div>
+
+                        <div class="concept-block">
+                            <h3>📋 Regras de Derivação</h3>
+                            <div class="formula-display">
+                                $(x^n)' = nx^{n-1}$ &nbsp;&nbsp; (Potência)<br><br>
+                                $(e^x)' = e^x$ &nbsp;&nbsp; (Exponencial natural)<br><br>
+                                $(\ln x)' = \frac{1}{x}$ &nbsp;&nbsp; (Logaritmo natural)<br><br>
+                                $(\sin x)' = \cos x$ &nbsp;&nbsp; (Seno)<br><br>
+                                $(\cos x)' = -\sin x$ &nbsp;&nbsp; (Cosseno)<br><br>
+                                $(u \cdot v)' = u'v + uv'$ &nbsp;&nbsp; (Produto)<br><br>
+                                $\left(\frac{u}{v}\right)' = \frac{u'v - uv'}{v^2}$ &nbsp;&nbsp; (Quociente)<br><br>
+                                $(f(g(x)))' = f'(g(x)) \cdot g'(x)$ &nbsp;&nbsp; (Cadeia)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="calc-integrais">
+                        <div class="concept-block">
+                            <h3>∫ Integral Indefinida</h3>
+                            <div class="formula-display">
+                                $$\int f(x)\,dx = F(x) + C$$
+                                <br>
+                                Onde $F'(x) = f(x)$ e $C$ é a constante de integração.
+                            </div>
+                        </div>
+
+                        <div class="concept-block">
+                            <h3>📋 Integrais Imediatas</h3>
+                            <div class="formula-display">
+                                $\int x^n\,dx = \frac{x^{n+1}}{n+1} + C, \quad n \neq -1$<br><br>
+                                $\int e^x\,dx = e^x + C$<br><br>
+                                $\int \frac{1}{x}\,dx = \ln|x| + C$<br><br>
+                                $\int \sin x\,dx = -\cos x + C$<br><br>
+                                $\int \cos x\,dx = \sin x + C$<br><br>
+                                $\int \frac{1}{1+x^2}\,dx = \arctan x + C$
+                            </div>
+                        </div>
+
+                        <div class="concept-block">
+                            <h3>📊 Teorema Fundamental do Cálculo</h3>
+                            <div class="formula-display">
+                                $$\int_a^b f(x)\,dx = F(b) - F(a)$$
+                                <br>
+                                Relaciona derivada e integral como operações inversas.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="calc-series">
+                        <div class="concept-block">
+                            <h3>∞ Séries Numéricas</h3>
+                            <div class="formula-display">
+                                Uma série infinita: $\displaystyle\sum_{n=1}^{\infty} a_n = a_1 + a_2 + a_3 + \cdots$
+                                <br><br>
+                                <strong>Série Geométrica:</strong> $\displaystyle\sum_{n=0}^{\infty} ar^n = \frac{a}{1-r}, \quad |r| < 1$
+                            </div>
+                        </div>
+
+                        <div class="concept-block">
+                            <h3>📐 Séries de Taylor</h3>
+                            <div class="formula-display">
+                                $$f(x) = \sum_{n=0}^{\infty} \frac{f^{(n)}(a)}{n!}(x-a)^n$$
+                                <br><br>
+                                <strong>Exemplos importantes:</strong><br>
+                                $e^x = \displaystyle\sum_{n=0}^{\infty} \frac{x^n}{n!}$<br>
+                                $\sin x = \displaystyle\sum_{n=0}^{\infty} (-1)^n \frac{x^{2n+1}}{(2n+1)!}$<br>
+                                $\cos x = \displaystyle\sum_{n=0}^{\infty} (-1)^n \frac{x^{2n}}{(2n)!}$
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ÁLGEBRA LINEAR SECTION -->
+            <section class="section" id="section-algebra-linear">
+                <h2>Álgebra Linear</h2>
+                
+                <div class="concept-block">
+                    <h3>⬡ Espaços Vetoriais</h3>
+                    <div class="formula-display">
+                        Um espaço vetorial $V$ sobre um corpo $\mathbb{F}$ satisfaz:<br><br>
+                        • Fechamento: $\mathbf{u} + \mathbf{v} \in V$, $c\mathbf{u} \in V$<br>
+                        • Associatividade e comutatividade da soma<br>
+                        • Elemento neutro e inverso aditivo<br>
+                        • Distributividade
+                    </div>
+                </div>
+
+                <div class="concept-block">
+                    <h3>📐 Base e Dimensão</h3>
+                    <div class="formula-display">
+                        Uma base de $V$ é um conjunto LI que gera $V$.<br><br>
+                        A dimensão $\dim(V)$ é o número de vetores em qualquer base.<br><br>
+                        $\dim(\mathbb{R}^n) = n$
+                    </div>
+                </div>
+
+                <div class="concept-block">
+                    <h3>🔄 Transformações Lineares</h3>
+                    <div class="formula-display">
+                        $T: U \to V$ é linear se:<br><br>
+                        $T(\mathbf{u} + \mathbf{v}) = T(\mathbf{u}) + T(\mathbf{v})$<br>
+                        $T(c\mathbf{u}) = cT(\mathbf{u})$
+                    </div>
+                </div>
+
+                <div class="concept-block">
+                    <h3>✨ Autovalores e Autovetores</h3>
+                    <div class="formula-display">
+                        $\mathbf{v}$ é autovetor de $A$ se:<br><br>
+                        $$A\mathbf{v} = \lambda\mathbf{v}$$
+                        <br>
+                        Onde $\lambda$ é o autovalor correspondente.<br><br>
+                        Encontrados resolvendo: $\det(A - \lambda I) = 0$
+                    </div>
+                </div>
+            </section>
+
+            <!-- EQUAÇÕES DIFERENCIAIS SECTION -->
+            <section class="section" id="section-equacoes-diferenciais">
+                <h2>Equações Diferenciais</h2>
+                
+                <div class="concept-block">
+                    <h3>∂ Definição</h3>
+                    <div class="formula-display">
+                        Uma equação diferencial envolve derivadas de uma função incógnita.<br><br>
+                        <strong>Ordem 1:</strong> $\frac{dy}{dx} = f(x,y)$<br>
+                        <strong>Ordem 2:</strong> $\frac{d^2y}{dx^2} + p(x)\frac{dy}{dx} + q(x)y = r(x)$
+                    </div>
+                </div>
+
+                <div class="concept-block">
+                    <h3>📋 ED's Lineares de 1ª Ordem</h3>
+                    <div class="formula-display">
+                        Forma: $\frac{dy}{dx} + P(x)y = Q(x)$<br><br>
+                        Solução usando fator integrante $\mu(x) = e^{\int P(x)dx}$:<br><br>
+                        $$y = \frac{1}{\mu(x)}\left[\int \mu(x)Q(x)\,dx + C\right]$$
+                    </div>
+                </div>
+
+                <div class="concept-block">
+                    <h3>📊 ED's de 2ª Ordem Homogêneas</h3>
+                    <div class="formula-display">
+                        $ay'' + by' + cy = 0$<br><br>
+                        Equação característica: $ar^2 + br + c = 0$<br><br>
+                        Raízes $r_1 \neq r_2$: $y = c_1e^{r_1x} + c_2e^{r_2x}$<br>
+                        Raiz dupla $r$: $y = (c_1 + c_2x)e^{rx}$<br>
+                        Raízes complexas $\alpha \pm \beta i$: $y = e^{\alpha x}(c_1\cos\beta x + c_2\sin\beta x)$
+                    </div>
+                </div>
+            </section>
+
+            <!-- ANÁLISE COMPLEXA SECTION -->
+            <section class="section" id="section-analise-complexa">
+                <h2>Análise Complexa</h2>
+                
+                <div class="concept-block">
+                    <h3>ℂ Números Complexos</h3>
+                    <div class="formula-display">
+                        $z = x + iy$ onde $i^2 = -1$<br><br>
+                        Forma polar: $z = re^{i\theta} = r(\cos\theta + i\sin\theta)$<br><br>
+                        Módulo: $|z| = \sqrt{x^2 + y^2} = r$<br>
+                        Argumento: $\arg(z) = \theta$
+                    </div>
+                </div>
+
+                <div class="concept-block">
+                    <h3>📐 Fórmula de Euler</h3>
+                    <div class="formula-display">
+                        $$e^{i\theta} = \cos\theta + i\sin\theta$$
+                        <br><br>
+                        Caso especial ($\theta = \pi$):<br>
+                        $$e^{i\pi} + 1 = 0 \quad \text{(Identidade de Euler)}}$$
+                    </div>
+                </div>
+
+                <div class="concept-block">
+                    <h3>∫ Integração Complexa</h3>
+                    <div class="formula-display">
+                        Integral de contorno: $\displaystyle\oint_\gamma f(z)\,dz$<br><br>
+                        <strong>Teorema de Cauchy:</strong> Se $f$ é analítica em região simplesmente conexa:<br>
+                        $$\oint_\gamma f(z)\,dz = 0$$
+                    </div>
+                </div>
+            </section>
+
+            <!-- GRÁFICOS 2D SECTION -->
+            <section class="section" id="section-graficos-2d">
+                <h2>Visualizador de Funções 2D</h2>
+                <p style="margin-bottom: 1.5rem;">Plote funções matemáticas em tempo real. Use expressões como sin(x), x^2, exp(-x^2), etc.</p>
+                
+                <div class="visualizer-container">
+                    <div class="visualizer-header">
+                        <span class="visualizer-title">📊 Gráfico 2D Interativo</span>
+                        <div class="visualizer-controls">
+                            <div class="input-group">
+                                <label>f(x) =</label>
+                                <input type="text" class="text-input" id="graph2DInput" value="sin(x)*exp(-x^2/10)" placeholder="Ex: x^2, sin(x), exp(x)">
+                            </div>
+                            <div class="preset-buttons">
+                                <button class="preset-btn" onclick="setMainFunction2D('sin(x)">sin(x)</button>
+                                <button class="preset-btn" onclick="setMainFunction2D('x^2')">x²</button>
+                                <button class="preset-btn" onclick="setMainFunction2D('exp(-x^2)">Gaussiana</button>
+                                <button class="preset-btn" onclick="setMainFunction2D('1/x')">1/x</button>
+                                <button class="preset-btn" onclick="setMainFunction2D('tan(x)">tan(x)</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper" style="aspect-ratio: 16/9;">
+                        <canvas id="mainGraph2DCanvas"></canvas>
+                    </div>
+                    <div class="visualizer-header" style="border-top: 1px solid var(--border-color);">
+                        <div class="visualizer-controls">
+                            <div class="slider-control">
+                                <label>X Range</label>
+                                <input type="range" class="slider" id="xRangeSlider" min="1" max="50" value="10" oninput="updateXRange(this.value)">
+                                <span class="slider-value" id="xRangeValue">±10</span>
+                            </div>
+                            <div class="slider-control">
+                                <label>Y Range</label>
+                                <input type="range" class="slider" id="yRangeSlider" min="1" max="50" value="10" oninput="updateYRange(this.value)">
+                                <span class="slider-value" id="yRangeValue">±10</span>
+                            </div>
+                            <div class="slider-control">
+                                <label>Linha</label>
+                                <input type="range" class="slider" id="lineWidthSlider" min="1" max="5" value="2" step="0.5" oninput="updateLineWidth(this.value)">
+                            </div>
+                            <div class="input-group">
+                                <label>Cor</label>
+                                <input type="color" class="color-picker" id="graphColorPicker" value="#3b82f6" onchange="updateGraphColor(this.value)">
+                            </div>
+                            <button class="btn btn-secondary" onclick="resetGraph2D()">↺ Reset</button>
+                            <button class="btn btn-primary" onclick="downloadGraph2D()">💾 Salvar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-block" style="margin-top: 1.5rem;">
+                    <h3>📝 Expressões Suportadas</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem; margin-top: 0.75rem;">
+                        <code>sin(x), cos(x), tan(x)</code>
+                        <code>asin(x), acos(x), atan(x)</code>
+                        <code>exp(x), log(x), sqrt(x)</code>
+                        <code>abs(x), sign(x)</code>
+                        <code>x^n (potências)</code>
+                        <code>pi, e (constantes)</code>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GRÁFICOS 3D SECTION -->
+            <section class="section" id="section-graficos-3d">
+                <h2>Visualizador de Superfícies 3D</h2>
+                <p style="margin-bottom: 1.5rem;">Explore superfícies matemáticas em três dimensões. Arraste para rotacionar.</p>
+                
+                <div class="visualizer-container">
+                    <div class="visualizer-header">
+                        <span class="visualizer-title">🧊 Superfície 3D</span>
+                        <div class="visualizer-controls">
+                            <div class="input-group">
+                                <label>z = f(x,y) =</label>
+                                <input type="text" class="text-input" id="surface3DInput" value="sin(sqrt(x^2+y^2))" placeholder="Ex: x^2+y^2, sin(x*y)">
+                            </div>
+                            <div class="preset-buttons">
+                                <button class="preset-btn" onclick="setSurface3D('x^2+y^2')">Parabolóide</button>
+                                <button class="preset-btn" onclick="setSurface3D('sin(x)*cos(y)">Ondas</button>
+                                <button class="preset-btn" onclick="setSurface3D('sin(sqrt(x^2+y^2))')">Ripple</button>
+                                <button class="preset-btn" onclick="setSurface3D('cos(x*y)/ (x^2+y^2+1)">Sombrero</brero>
+                                <button class="preset-btn" onclick="setSurface3D('x^2-y^2')">Sela</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper" style="aspect-ratio: 16/10;">
+                        <canvas id="surface3DCanvas"></canvas>
+                    </div>
+                    <div class="visualizer-header" style="border-top: 1px solid var(--border-color);">
+                        <div class="visualizer-controls">
+                            <div class="slider-control">
+                                <label>Resolução</label>
+                                <input type="range" class="slider" id="resolution3DSlider" min="20" max="100" value="50" oninput="updateResolution3D(this.value)">
+                                <span class="slider-value" id="res3DValue">50</span>
+                            </div>
+                            <div class="slider-control">
+                                <label>Escala Z</label>
+                                <input type="range" class="slider" id="scaleZSlider" min="1" max="10" value="3" step="0.5" oninput="updateScaleZ(this.value)">
+                            </div>
+                            <div class="input-group">
+                                <label>Cor</label>
+                                <input type="color" class="color-picker" id="surfaceColorPicker" value="#8b5cf6" onchange="updateSurfaceColor(this.value)">
+                            </div>
+                            <button class="btn btn-secondary" onclick="resetSurface3D()">↺ Reset View</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FRACTAIS SECTION -->
+            <section class="section" id="section-fractais">
+                <h2>Visualizador de Fractais</h2>
+                <p style="margin-bottom: 1.5rem;">Explore os fascinantes mundos dos fractais de Mandelbrot e Julia.</p>
+                
+                <div class="tabs-container">
+                    <div class="tabs-header">
+                        <button class="tab-btn active" onclick="switchFractalTab('mandelbrot')">🌀 Mandelbrot</button>
+                        <button class="tab-btn" onclick="switchFractalTab('julia')">🎨 Julia Set</button>
+                    </div>
+                </div>
+
+                <div class="visualizer-container">
+                    <div class="visualizer-header">
+                        <span class="visualizer-title" id="fractalTitle">🌀 Conjunto de Mandelbrot</span>
+                        <div class="visualizer-controls">
+                            <div class="slider-control">
+                                <label>Iterações</label>
+                                <input type="range" class="slider" id="iterSlider" min="20" max="500" value="100" oninput="updateIterations(this.value)">
+                                <span class="slider-value" id="iterValue">100</span>
+                            </div>
+                            <div class="slider-control">
+                                <label>Zoom</label>
+                                <input type="range" class="slider" id="zoomSlider" min="1" max="1000" value="1" oninput="updateFractalZoom(this.value)">
+                                <span class="slider-value" id="zoomValue">1x</span>
+                            </div>
+                            <div class="input-group">
+                                <label>Paleta</label>
+                                <select id="paletteSelect" onchange="changePalette(this.value)" style="padding: 0.5rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                                    <option value="rainbow">Arco-íris</option>
+                                    <option value="fire">Fogo</option>
+                                    <option value="ocean">Oceano</option>
+                                    <option value="grayscale">Escala de Cinza</option>
+                                    <option value="neon">Neon</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-secondary" onclick="resetFractal()">↺ Reset</button>
+                            <button class="btn btn-primary" onclick="downloadFractal()">💾 Salvar</button>
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper" style="aspect-ratio: 16/10; cursor: crosshair;" id="fractalWrapper">
+                        <canvas id="fractalCanvas"></canvas>
+                    </div>
+                    <div class="visualizer-header" style="border-top: 1px solid var(--border-color);" id="juliaControls" style="display: none;">
+                        <div class="visualizer-controls">
+                            <div class="slider-control">
+                                <label>c Real</label>
+                                <input type="range" class="slider" id="cRealSlider" min="-2" max="2" value="-0.7" step="0.01" oninput="updateJuliaC()">
+                                <span class="slider-value" id="cRealValue">-0.7</span>
+                            </div>
+                            <div class="slider-control">
+                                <label>c Imag</label>
+                                <input type="range" class="slider" id="cImagSlider" min="-2" max="2" value="0.27" step="0.01" oninput="updateJuliaC()">
+                                <span class="slider-value" id="cImagValue">0.27</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-block" style="margin-top: 1.5rem;">
+                    <h3>📖 Sobre Fractais</h3>
+                    <p>O conjunto de Mandelbrot é definido pelos números complexos $c$ para os quais a função $f_c(z) = z^2 + c$ não diverge quando iterada a partir de $z = 0$.</p>
+                    <div class="formula-display">
+                        $$z_{n+1} = z_n^2 + c$$
+                        <br>
+                        Se $|z|$ permanece limitado após muitas iterações, $c$ pertence ao conjunto.
+                    </div>
+                    <p style="margin-top: 0.75rem;"><strong>Dica:</strong> Clique no fractal para zoom nessa região!</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- HELP MODAL -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal" role="dialog" aria-labelledby="modalTitle">
+            <div class="modal-header">
+                <h3 id="modalTitle">🚀 Como Usar o MathSpace Academy</h3>
+                <button class="modal-close" onclick="closeModal('help')" aria-label="Fechar">×</button>
+            </div>
+            <div class="modal-body">
+                <ul>
+                    <li>
+                        <strong>Navegue pelo menu lateral</strong> para acessar diferentes módulos de matemática
+                    </li>
+                    <li>
+                        <strong>Use o campo de busca</strong> para encontrar tópicos específicos rapidamente
+                    </li>
+                    <li>
+                        <strong>Alterne entre modos</strong> Iniciante/Avançado no rodapé do menu
+                    </li>
+                    <li>
+                        <strong>Visualizadores 2D/3D:</strong> Digite expressões matemáticas e veja os gráficos em tempo real
+                    </li>
+                    <li>
+                        <strong>Fractais:</strong> Clique para dar zoom, use sliders para ajustar parâmetros
+                    </li>
+                    <li>
+                        <strong>Seu progresso é salvo automaticamente</strong> no navegador (localStorage)
+                    </li>
+                    <li>
+                        <strong>Atalhos de teclado:</strong> Use Tab para navegar, Enter para confirmar
+                    </li>
+                </ul>
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-tertiary); border-radius: 8px;">
+                    <strong>💡 Expressões suportadas nos visualizadores:</strong><br>
+                    <code>sin, cos, tan, exp, log, sqrt, abs, pi, e, ^ (potência)</code>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- KaTeX Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <!-- Main Application Script -->
+    <script>
+        /**
+         * ============================================
+         * MATHSPACE ACADEMY - Main Application
+         * ============================================
+         * Educational Mathematics Platform with:
+         * - Interactive 2D/3D Graph Plotters
+         * - Fractal Visualizers (Mandelbrot, Julia)
+         * - Progressive Learning Modules
+         * - NASA-inspired Dark Theme UI
+         * ============================================
+         */
+
+        // ============================================
+        // APPLICATION STATE
+        // ============================================
+        const AppState = {
+            currentSection: 'home',
+            advancedMode: false,
+            graph2D: {
+                expression: 'sin(x)*exp(-x^2/10)',
+                xMin: -10, xMax: 10,
+                yMin: -10, yMax: 10,
+                lineWidth: 2,
+                color: '#3b82f6'
+            },
+            surface3D: {
+                expression: 'sin(sqrt(x^2+y^2))',
+                resolution: 50,
+                scaleZ: 3,
+                color: '#8b5cf6',
+                rotationX: 0.5,
+                rotationY: 0.5
+            },
+            fractal: {
+                type: 'mandelbrot',
+                iterations: 100,
+                zoom: 1,
+                centerX: -0.5,
+                centerY: 0,
+                palette: 'rainbow',
+                juliaC: { real: -0.7, imag: 0.27 }
+            }
+        };
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        
+        /**
+         * Debounce function for input optimization
+         */
+        function debounce(func, wait = 250) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        /**
+         * Show toast notification
+         */
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        /**
+         * Save state to localStorage
+         */
+        function saveState() {
+            try {
+                localStorage.setItem('mathspace_state', JSON.stringify(AppState));
+            } catch (e) {
+                console.warn('Could not save state:', e);
+            }
+        }
+
+        /**
+         * Load state from localStorage
+         */
+        function loadState() {
+            try {
+                const saved = localStorage.getItem('mathspace_state');
+                if (saved) {
+                    Object.assign(AppState, JSON.parse(saved));
+                }
+            } catch (e) {
+                console.warn('Could not load state:', e);
+            }
+        }
+
+        // ============================================
+        // NAVIGATION SYSTEM
+        // ============================================
+        
+        function navigateTo(sectionId) {
+            // Update state
+            AppState.currentSection = sectionId;
+            saveState();
+
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            
+            // Show target section
+            const targetSection = document.getElementById(`section-${sectionId}`);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.section === sectionId);
+            });
+
+            // Update header title
+            const titles = {
+                'home': 'Dashboard',
+                'algebra': 'Álgebra',
+                'funcoes': 'Funções',
+                'geometria-analitica': 'Geometria Analítica',
+                'matrizes': 'Matrizes e Determinantes',
+                'calculo': 'Cálculo Diferencial e Integral',
+                'algebra-linear': 'Álgebra Linear',
+                'equacoes-diferenciais': 'Equações Diferenciais',
+                'analise-complexa': 'Análise Complexa',
+                'graficos-2d': 'Gráficos 2D',
+                'graficos-3d': 'Superfícies 3D',
+                'fractais': 'Fractais'
+            };
+            document.getElementById('headerTitle').textContent = titles[sectionId] || 'MathSpace';
+
+            // Close mobile menu
+            document.getElementById('sidebar').classList.remove('open');
+
+            // Initialize visualizers if needed
+            if (sectionId === 'graficos-2d') {
+                initGraph2D();
+            } else if (sectionId === 'graficos-3d') {
+                initSurface3D();
+            } else if (sectionId === 'fractais') {
+                initFractal();
+            }
+
+            // Re-render math formulas
+            renderMathInElement(document.getElementById(`section-${sectionId}`), {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false}
+                ]
+            });
+        }
+
+        // ============================================
+        // TAB SYSTEM
+        // ============================================
+        
+        function switchTab(btn, tabId) {
+            // Update buttons in same container
+            const container = btn.parentElement;
+            container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update tab contents in parent tabs-container
+            const tabsContainer = container.parentElement;
+            tabsContainer.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function switchFractalTab(type) {
+            AppState.fractal.type = type;
+            document.getElementById('fractalTitle').textContent = 
+                type === 'mandelbrot' ? '🌀 Conjunto de Mandelbrot' : '🎨 Julia Set';
+            document.getElementById('juliaControls').style.display = 
+                type === 'julia' ? 'block' : 'none';
+            renderFractal();
+        }
+
+        // ============================================
+        // MODAL SYSTEM
+        // ============================================
+        
+        function openModal(id) {
+            document.getElementById(`${id}Modal`).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(`${id}Modal`).classList.remove('active');
+        }
+
+        // Close modal on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.classList.remove('active');
+            });
+        });
+
+        // ============================================
+        // MODE TOGGLE
+        // ============================================
+        
+        document.getElementById('modeToggle').addEventListener('click', () => {
+            AppState.advancedMode = !AppState.advancedMode;
+            document.getElementById('toggleSwitch').classList.toggle('active', AppState.advancedMode);
+            document.getElementById('modeToggle').setAttribute('aria-checked', AppState.advancedMode);
+            saveState();
+            showToast(`Modo ${AppState.advancedMode ? 'Avançado' : 'Iniciante'} ativado`, 'success');
+        });
+
+        // Keyboard support for toggle
+        document.getElementById('modeToggle').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                document.getElementById('modeToggle').click();
+            }
+        });
+
+        // ============================================
+        // MOBILE MENU
+        // ============================================
+        
+        document.getElementById('mobileMenuToggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
+
+        // ============================================
+        // SEARCH FUNCTIONALITY
+        // ============================================
+        
+        document.getElementById('searchInput').addEventListener('input', debounce((e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (!query) return;
+
+            const searchableItems = [
+                { section: 'algebra', terms: ['álgebra', 'equação', 'polinômio', 'bhaskara'] },
+                { section: 'funcoes', terms: ['função', 'afim', 'quadrática', 'exponencial', 'logarítmica', 'trigonométrica'] },
+                { section: 'geometria-analitica', terms: ['geometria', 'reta', 'circunferência', 'elipse', 'hipérbole'] },
+                { section: 'matrizes', terms: ['matriz', 'determinante', 'sistema linear'] },
+                { section: 'calculo', terms: ['cálculo', 'limite', 'derivada', 'integral', 'série'] },
+                { section: 'algebra-linear', terms: ['vetor', 'espaço vetorial', 'transformação linear', 'autovalor'] },
+                { section: 'equacoes-diferenciais', terms: ['equação diferencial', 'ed', 'ordem'] },
+                { section: 'analise-complexa', terms: ['complexo', 'número complexo', 'cauchy', 'euler'] },
+                { section: 'graficos-2d', terms: ['gráfico', '2d', 'plotar', 'função'] },
+                { section: 'graficos-3d', terms: ['superfície', '3d', 'tridimensional'] },
+                { section: 'fractais', terms: ['fractal', 'mandelbrot', 'julia'] }
+            ];
+
+            const match = searchableItems.find(item => 
+                item.terms.some(term => term.includes(query))
+            );
+
+            if (match) {
+                navigateTo(match.section);
+                showToast(`Navegando para: ${match.section}`, 'info');
+            }
+        }, 300));
+
+        // ============================================
+        // MODULES GRID RENDERING
+        // ============================================
+        
+        const modulesData = [
+            {
+                icon: '🔢',
+                title: 'Álgebra',
+                description: 'Produtos notáveis, fatoração, equações polinomiais e sistemas.',
+                level: 'highschool',
+                topics: ['Polinômios', 'Equações', 'Fatoração'],
+                section: 'algebra'
+            },
+            {
+                icon: '📈',
+                title: 'Funções',
+                description: 'Funções afim, quadrática, exponencial, logarítmica e trigonométrica.',
+                level: 'highschool',
+                topics: ['Afim', 'Quadrática', 'Exp/Log', 'Trig'],
+                section: 'funcoes'
+            },
+            {
+                icon: '📐',
+                title: 'Geometria Analítica',
+                description: 'Retas, circunferências, cônicas e distâncias no plano cartesiano.',
+                level: 'highschool',
+                topics: ['Retas', 'Cônicas', 'Vetores'],
+                section: 'geometria-analitica'
+            },
+            {
+                icon: '🔲',
+                title: 'Matrizes & Determinantes',
+                description: 'Operações matriciais, sistemas lineares e determinantes.',
+                level: 'highschool',
+                topics: ['Matrizes', 'Determinantes', 'Sistemas'],
+                section: 'matrizes'
+            },
+            {
+                icon: '∑',
+                title: 'Cálculo Diferencial & Integral',
+                description: 'Limites, derivadas, integrais, séries e aplicações.',
+                level: 'university',
+                topics: ['Limites', 'Derivadas', 'Integrais', 'Séries'],
+                section: 'calculo'
+            },
+            {
+                icon: '⬡',
+                title: 'Álgebra Linear',
+                description: 'Espaços vetoriais, transformações lineares, autovalores.',
+                level: 'university',
+                topics: ['Vetores', 'Base', 'Autovalores'],
+                section: 'algebra-linear'
+            },
+            {
+                icon: '∂',
+                title: 'Equações Diferenciais',
+                description: 'EDOs de 1ª e 2ª ordem, sistemas dinâmicos.',
+                level: 'advanced',
+                topics: ['EDO 1ª ordem', 'EDO 2ª ordem', 'Sistemas'],
+                section: 'equacoes-diferenciais'
+            },
+            {
+                icon: 'ℂ',
+                title: 'Análise Complexa',
+                description: 'Funções complexas, teorema de Cauchy, resíduos.',
+                level: 'advanced',
+                topics: ['Números ℂ', 'Integração', 'Resíduos'],
+                section: 'analise-complexa'
+            },
+            {
+                icon: '📊',
+                title: 'Visualizador 2D',
+                description: 'Plote funções matemáticas com controle total sobre o gráfico.',
+                level: 'university',
+                topics: ['Funções', 'Interativo', 'Exportar'],
+                section: 'graficos-2d'
+            },
+            {
+                icon: '🧊',
+                title: 'Superfícies 3D',
+                description: 'Explore superfícies matemáticas em três dimensões.',
+                level: 'university',
+                topics: ['3D', 'Rotação', 'Parâmetros'],
+                section: 'graficos-3d'
+            },
+            {
+                icon: '🌀',
+                title: 'Fractais',
+                description: 'Conjuntos de Mandelbrot e Julia com zoom infinito.',
+                level: 'advanced',
+                topics: ['Mandelbrot', 'Julia', 'Zoom'],
+                section: 'fractais'
+            }
+        ];
+
+        function renderModulesGrid() {
+            const grid = document.getElementById('modulesGrid');
+            grid.innerHTML = modulesData.map(mod => `
+                <div class="module-card" onclick="navigateTo('${mod.section}')">
+                    <div class="module-card-header">
+                        <div class="module-icon">${mod.icon}</div>
+                        <span class="module-level level-${mod.level}">
+                            ${mod.level === 'highschool' ? 'Ensino Médio' : mod.level === 'university' ? 'Superior' : 'Avançado'}
+                        </span>
+                    </div>
+                    <h3>${mod.title}</h3>
+                    <p>${mod.description}</p>
+                    <div class="module-topics">
+                        ${mod.topics.map(t => `<span class="topic-tag">${t}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================
+        // MATH EXPRESSION PARSER (Safe eval)
+        // ============================================
+        
+        /**
+         * Safe mathematical expression parser
+         * Evaluates math expressions without using dangerous eval()
+         */
+        function parseMathExpression(expr, x, y = 0) {
+            try {
+                // Sanitize and prepare expression
+                let sanitized = expr
+                    .replace(/\^/g, '**')
+                    .replace(/sin/g, 'Math.sin')
+                    .replace(/cos/g, 'Math.cos')
+                    .replace(/tan/g, 'Math.tan')
+                    .replace(/asin/g, 'Math.asin')
+                    .replace(/acos/g, 'Math.acos')
+                    .replace(/atan/g, 'Math.atan')
+                    .replace(/exp/g, 'Math.exp')
+                    .replace(/log/g, 'Math.log')
+                    .replace(/sqrt/g, 'Math.sqrt')
+                    .replace(/abs/g, 'Math.abs')
+                    .replace(/sign/g, 'Math.sign')
+                    .replace(/pi/g, 'Math.PI')
+                    .replace(/(?<![a-zA-Z])e(?![a-zA-Z])/g, 'Math.E')
+                    .replace(/x/g, `(${x})`)
+                    .replace(/y/g, `(${y})`);
+                
+                // Evaluate safely using Function constructor (restricted scope)
+                const result = new Function(`return ${sanitized}`)();
+                return isFinite(result) ? result : NaN;
+            } catch (e) {
+                return NaN;
+            }
+        }
+
+        // ============================================
+        // 2D GRAPH PLOTTER
+        // ============================================
+        
+        let graph2DCanvas, graph2DCtx;
+        let graph2DInitialized = false;
+
+        function initGraph2D() {
+            if (graph2DInitialized) {
+                drawGraph2D();
+                return;
+            }
+
+            graph2DCanvas = document.getElementById('mainGraph2DCanvas');
+            if (!graph2DCanvas) return;
+            
+            graph2DCtx = graph2DCanvas.getContext('2d');
+            resizeCanvas(graph2DCanvas);
+            
+            // Event listeners
+            document.getElementById('graph2DInput').addEventListener('input', debounce(() => {
+                AppState.graph2D.expression = document.getElementById('graph2DInput').value;
+                drawGraph2D();
+                saveState();
+            }, 150));
+
+            window.addEventListener('resize', () => {
+                resizeCanvas(graph2DCanvas);
+                drawGraph2D();
+            });
+
+            graph2DInitialized = true;
+            drawGraph2D();
+        }
+
+        function setMainFunction2D(expr) {
+            document.getElementById('graph2DInput').value = expr;
+            AppState.graph2D.expression = expr;
+            drawGraph2D();
+            saveState();
+        }
+
+        function setFunction2D(expr) {
+            // For inline graphs in other sections
+            const inputs = document.querySelectorAll('[id$="Input"]');
+            inputs.forEach(input => {
+                if (input.id !== 'graph2DInput' && input.id !== 'surface3DInput') {
+                    input.value = expr;
+                }
+            });
+            updateGraph2D();
+        }
+
+        function updateGraph2D() {
+            drawGraph2D();
+        }
+
+        function resizeCanvas(canvas) {
+            const wrapper = canvas.parentElement;
+            canvas.width = wrapper.clientWidth * window.devicePixelRatio;
+            canvas.height = wrapper.clientHeight * window.devicePixelRatio;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        function drawGraph2D() {
+            if (!graph2DCtx || !graph2DCanvas) return;
+
+            const ctx = graph2DCtx;
+            const w = graph2DCanvas.width / window.devicePixelRatio;
+            const h = graph2DCanvas.height / window.devicePixelRatio;
+            const { xMin, xMax, yMin, yMax, lineWidth, color, expression } = AppState.graph2D;
+
+            // Clear canvas
+            ctx.fillStyle = '#0a0e1a';
+            ctx.fillRect(0, 0, w, h);
+
+            // Calculate scales
+            const scaleX = w / (xMax - xMin);
+            const scaleY = h / (yMax - yMin);
+            
+            // Transform functions
+            const toScreenX = (x) => (x - xMin) * scaleX;
+            const toScreenY = (y) => h - (y - yMin) * scaleY;
+
+            // Draw grid
+            ctx.strokeStyle = 'rgba(75, 85, 99, 0.3)';
+            ctx.lineWidth = 0.5;
+            
+            // Vertical grid lines
+            const xStep = Math.ceil((xMax - xMin) / 20);
+            for (let x = Math.ceil(xMin / xStep) * xStep; x <= xMax; x += xStep) {
+                ctx.beginPath();
+                ctx.moveTo(toScreenX(x), 0);
+                ctx.lineTo(toScreenX(x), h);
+                ctx.stroke();
+            }
+            
+            // Horizontal grid lines
+            const yStep = Math.ceil((yMax - yMin) / 20);
+            for (let y = Math.ceil(yMin / yStep) * yStep; y <= yMax; y += yStep) {
+                ctx.beginPath();
+                ctx.moveTo(0, toScreenY(y));
+                ctx.lineTo(w, toScreenY(y));
+                ctx.stroke();
+            }
+
+            // Draw axes
+            ctx.strokeStyle = 'rgba(156, 163, 175, 0.8)';
+            ctx.lineWidth = 1.5;
+            
+            // X axis
+            if (yMin <= 0 && yMax >= 0) {
+                ctx.beginPath();
+                ctx.moveTo(0, toScreenY(0));
+                ctx.lineTo(w, toScreenY(0));
+                ctx.stroke();
+            }
+            
+            // Y axis
+            if (xMin <= 0 && xMax >= 0) {
+                ctx.beginPath();
+                ctx.moveTo(toScreenX(0), 0);
+                ctx.lineTo(toScreenX(0), h);
+                ctx.stroke();
+            }
+
+            // Draw axis labels
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            
+            for (let x = Math.ceil(xMin / xStep) * xStep; x <= xMax; x += xStep * 2) {
+                if (x !== 0) {
+                    ctx.fillText(x.toString(), toScreenX(x), toScreenY(0) + 14);
+                }
+            }
+            
+            ctx.textAlign = 'right';
+            for (let y = Math.ceil(yMin / yStep) * yStep; y <= yMax; y += yStep * 2) {
+                if (y !== 0) {
+                    ctx.fillText(y.toString(), toScreenX(0) - 6, toScreenY(y) + 4);
+                }
+            }
+
+            // Draw function curve
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+
+            let started = false;
+            const steps = w * 2;
+            const dx = (xMax - xMin) / steps;
+
+            for (let i = 0; i <= steps; i++) {
+                const x = xMin + i * dx;
+                const y = parseMathExpression(expression, x);
+                
+                if (!isNaN(y) && isFinite(y) && y >= yMin - 10 && y <= yMax + 10) {
+                    const sx = toScreenX(x);
+                    const sy = toScreenY(y);
+                    
+                    if (!started) {
+                        ctx.moveTo(sx, sy);
+                        started = true;
+                    } else {
+                        ctx.lineTo(sx, sy);
+                    }
+                } else {
+                    started = false;
+                }
+            }
+            
+            ctx.stroke();
+
+            // Draw origin marker
+            if (xMin <= 0 && xMax >= 0 && yMin <= 0 && yMax >= 0) {
+                ctx.fillStyle = '#9ca3af';
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText('O', toScreenX(0) - 6, toScreenY(0) + 14);
+            }
+        }
+
+        // Graph control handlers
+        function updateXRange(val) {
+            AppState.graph2D.xMin = -val;
+            AppState.graph2D.xMax = val;
+            document.getElementById('xRangeValue').textContent = `±${val}`;
+            drawGraph2D();
+            saveState();
+        }
+
+        function updateYRange(val) {
+            AppState.graph2D.yMin = -val;
+            AppState.graph2D.yMax = val;
+            document.getElementById('yRangeValue').textContent = `±${val}`;
+            drawGraph2D();
+            saveState();
+        }
+
+        function updateLineWidth(val) {
+            AppState.graph2D.lineWidth = parseFloat(val);
+            drawGraph2D();
+            saveState();
+        }
+
+        function updateGraphColor(val) {
+            AppState.graph2D.color = val;
+            drawGraph2D();
+            saveState();
+        }
+
+        function resetGraph2D() {
+            AppState.graph2D = {
+                expression: 'sin(x)*exp(-x^2/10)',
+                xMin: -10, xMax: 10,
+                yMin: -10, yMax: 10,
+                lineWidth: 2,
+                color: '#3b82f6'
+            };
+            document.getElementById('graph2DInput').value = AppState.graph2D.expression;
+            document.getElementById('xRangeSlider').value = 10;
+            document.getElementById('yRangeSlider').value = 10;
+            document.getElementById('lineWidthSlider').value = 2;
+            document.getElementById('graphColorPicker').value = '#3b82f6';
+            document.getElementById('xRangeValue').textContent = '±10';
+            document.getElementById('yRangeValue').textContent = '±10';
+            drawGraph2D();
+            saveState();
+            showToast('Gráfico resetado', 'info');
+        }
+
+        function downloadGraph2D() {
+            if (!graph2DCanvas) return;
+            const link = document.createElement('a');
+            link.download = 'graph2d.png';
+            link.href = graph2DCanvas.toDataURL();
+            link.click();
+            showToast('Gráfico salvo!', 'success');
+        }
+
+        // ============================================
+        // 3D SURFACE PLOTTER (Software Rendering)
+        // ============================================
+        
+        let surface3DCanvas, surface3DCtx;
+        let surface3DInitialized = false;
+        let isDragging3D = false;
+        let lastMousePos3D = { x: 0, y: 0 };
+
+        function initSurface3D() {
+            if (surface3DInitialized) {
+                drawSurface3D();
+                return;
+            }
+
+            surface3DCanvas = document.getElementById('surface3DCanvas');
+            if (!surface3DCanvas) return;
+            
+            surface3DCtx = surface3DCanvas.getContext('2d');
+            resizeCanvas(surface3DCanvas);
+            
+            // Input handler
+            document.getElementById('surface3DInput').addEventListener('input', debounce(() => {
+                AppState.surface3D.expression = document.getElementById('surface3DInput').value;
+                drawSurface3D();
+                saveState();
+            }, 150));
+
+            // Mouse drag rotation
+            surface3DCanvas.addEventListener('mousedown', (e) => {
+                isDragging3D = true;
+                lastMousePos3D = { x: e.clientX, y: e.clientY };
+                surface3DCanvas.style.cursor = 'grabbing';
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging3D) return;
+                const dx = e.clientX - lastMousePos3D.x;
+                const dy = e.clientY - lastMousePos3D.y;
+                AppState.surface3D.rotationY += dx * 0.01;
+                AppState.surface3D.rotationX += dy * 0.01;
+                lastMousePos3D = { x: e.clientX, y: e.clientY };
+                drawSurface3D();
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging3D = false;
+                if (surface3DCanvas) surface3DCanvas.style.cursor = 'grab';
+            });
+
+            // Touch support
+            surface3DCanvas.addEventListener('touchstart', (e) => {
+                isDragging3D = true;
+                lastMousePos3D = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            });
+
+            surface3DCanvas.addEventListener('touchmove', (e) => {
+                if (!isDragging3D) return;
+                e.preventDefault();
+                const dx = e.touches[0].clientX - lastMousePos3D.x;
+                const dy = e.touches[0].clientY - lastMousePos3D.y;
+                AppState.surface3D.rotationY += dx * 0.01;
+                AppState.surface3D.rotationX += dy * 0.01;
+                lastMousePos3D = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                drawSurface3D();
+            });
+
+            surface3DCanvas.addEventListener('touchend', () => {
+                isDragging3D = false;
+            });
+
+            window.addEventListener('resize', () => {
+                resizeCanvas(surface3DCanvas);
+                drawSurface3D();
+            });
+
+            surface3DCanvas.style.cursor = 'grab';
+            surface3DInitialized = true;
+            drawSurface3D();
+        }
+
+        function setSurface3D(expr) {
+            document.getElementById('surface3DInput').value = expr;
+            AppState.surface3D.expression = expr;
+            drawSurface3D();
+            saveState();
+        }
+
+        function project3D(x, y, z, cx, cy, scale) {
+            // Apply rotation
+            const cosX = Math.cos(AppState.surface3D.rotationX);
+            const sinX = Math.sin(AppState.surface3D.rotationX);
+            const cosY = Math.cos(AppState.surface3D.rotationY);
+            const sinY = Math.sin(AppState.surface3D.rotationY);
+
+            // Rotate around X axis
+            let y1 = y * cosX - z * sinX;
+            let z1 = y * sinX + z * cosX;
+
+            // Rotate around Y axis
+            let x1 = x * cosY + z1 * sinY;
+            let z2 = -x * sinY + z1 * cosY;
+
+            // Simple perspective projection
+            const perspective = 4;
+            const factor = perspective / (perspective + z2);
+
+            return {
+                x: cx + x1 * scale * factor,
+                y: cy - y1 * scale * factor,
+                z: z2
+            };
+        }
+
+        function drawSurface3D() {
+            if (!surface3DCtx || !surface3DCanvas) return;
+
+            const ctx = surface3DCtx;
+            const w = surface3DCanvas.width / window.devicePixelRatio;
+            const h = surface3DCanvas.height / window.devicePixelRatio;
+            const { expression, resolution, scaleZ, color } = AppState.surface3D;
+
+            // Clear
+            ctx.fillStyle = '#0a0e1a';
+            ctx.fillRect(0, 0, w, h);
+
+            const cx = w / 2;
+            const cy = h / 2;
+            const range = 2;
+            const scale = Math.min(w, h) / 5;
+            const step = (range * 2) / resolution;
+
+            // Generate points and compute z values
+            const points = [];
+            let minZ = Infinity, maxZ = -Infinity;
+
+            for (let i = 0; i <= resolution; i++) {
+                points[i] = [];
+                for (let j = 0; j <= resolution; j++) {
+                    const x = -range + i * step;
+                    const y = -range + j * step;
+                    const z = parseMathExpression(expression, x, y) / scaleZ;
+                    
+                    if (!isNaN(z) && isFinite(z)) {
+                        points[i][j] = { x, y, z };
+                        minZ = Math.min(minZ, z);
+                        maxZ = Math.max(maxZ, z);
+                    } else {
+                        points[i][j] = null;
+                    }
+                }
+            }
+
+            // Normalize z values
+            const zRange = maxZ - minZ || 1;
+
+            // Create faces for sorting (painter's algorithm)
+            const faces = [];
+
+            for (let i = 0; i < resolution; i++) {
+                for (let j = 0; j < resolution; j++) {
+                    const p1 = points[i][j];
+                    const p2 = points[i + 1][j];
+                    const p3 = points[i + 1][j + 1];
+                    const p4 = points[i][j + 1];
+
+                    if (p1 && p2 && p3 && p4) {
+                        const proj1 = project3D(p1.x, p1.y, p1.z, cx, cy, scale);
+                        const proj2 = project3D(p2.x, p2.y, p2.z, cx, cy, scale);
+                        const proj3 = project3D(p3.x, p3.y, p3.z, cx, cy, scale);
+                        const proj4 = project3D(p4.x, p4.y, p4.z, cx, cy, scale);
+
+                        const avgZ = (proj1.z + proj2.z + proj3.z + proj4.z) / 4;
+                        const avgVal = (p1.z + p2.z + p3.z + p4.z) / 4;
+
+                        faces.push({
+                            points: [proj1, proj2, proj3, proj4],
+                            z: avgZ,
+                            value: avgVal
+                        });
+                    }
+                }
+            }
+
+            // Sort by z (back to front)
+            faces.sort((a, b) => a.z - b.z);
+
+            // Draw faces
+            faces.forEach(face => {
+                const normalizedVal = (face.value - minZ) / zRange;
+                
+                // Create gradient based on height
+                const hue = parseInt(color.slice(1), 16) % 360;
+                const lightness = 30 + normalizedVal * 40;
+                const saturation = 70 + normalizedVal * 30;
+                
+                ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                ctx.strokeStyle = `hsla(${hue}, ${saturation}%, ${lightness + 10}%, 0.5)`;
+                ctx.lineWidth = 0.5;
+
+                ctx.beginPath();
+                ctx.moveTo(face.points[0].x, face.points[0].y);
+                ctx.lineTo(face.points[1].x, face.points[1].y);
+                ctx.lineTo(face.points[2].x, face.points[2].y);
+                ctx.lineTo(face.points[3].x, face.points[3].y);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            });
+
+            // Draw axes hint
+            ctx.strokeStyle = 'rgba(156, 163, 175, 0.5)';
+            ctx.lineWidth = 1;
+            
+            const origin = project3D(0, 0, 0, cx, cy, scale);
+            const xAxis = project3D(range * 0.5, 0, 0, cx, cy, scale);
+            const yAxis = project3D(0, range * 0.5, 0, cx, cy, scale);
+            const zAxis = project3D(0, 0, range * 0.5, cx, cy, scale);
+
+            // X axis (red)
+            ctx.strokeStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(origin.x, origin.y);
+            ctx.lineTo(xAxis.x, xAxis.y);
+            ctx.stroke();
+
+            // Y axis (green)
+            ctx.strokeStyle = '#10b981';
+            ctx.beginPath();
+            ctx.moveTo(origin.x, origin.y);
+            ctx.lineTo(yAxis.x, yAxis.y);
+            ctx.stroke();
+
+            // Z axis (blue)
+            ctx.strokeStyle = '#3b82f6';
+            ctx.beginPath();
+            ctx.moveTo(origin.x, origin.y);
+            ctx.lineTo(zAxis.x, zAxis.y);
+            ctx.stroke();
+        }
+
+        function updateResolution3D(val) {
+            AppState.surface3D.resolution = parseInt(val);
+            document.getElementById('res3DValue').textContent = val;
+            drawSurface3D();
+            saveState();
+        }
+
+        function updateScaleZ(val) {
+            AppState.surface3D.scaleZ = parseFloat(val);
+            drawSurface3D();
+            saveState();
+        }
+
+        function updateSurfaceColor(val) {
+            AppState.surface3D.color = val;
+            drawSurface3D();
+            saveState();
+        }
+
+        function resetSurface3D() {
+            AppState.surface3D.rotationX = 0.5;
+            AppState.surface3D.rotationY = 0.5;
+            drawSurface3D();
+            saveState();
+            showToast('Visualização resetada', 'info');
+        }
+
+        // ============================================
+        // FRACTAL VISUALIZER
+        // ============================================
+        
+        let fractalCanvas, fractalCtx;
+        let fractalInitialized = false;
+        let fractalImageData;
+
+        function initFractal() {
+            if (fractalInitialized) {
+                renderFractal();
+                return;
+            }
+
+            fractalCanvas = document.getElementById('fractalCanvas');
+            if (!fractalCanvas) return;
+            
+            fractalCtx = fractalCanvas.getContext('2d');
+            resizeCanvas(fractalCanvas);
+
+            // Click to zoom
+            document.getElementById('fractalWrapper').addEventListener('click', (e) => {
+                const rect = fractalCanvas.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickY = e.clientY - rect.top;
+                const w = rect.width;
+                const h = rect.height;
+
+                // Convert click to complex coordinates
+                const scale = 4 / AppState.fractal.zoom;
+                const newCenterX = AppState.fractal.centerX + (clickX / w - 0.5) * scale;
+                const newCenterY = AppState.fractal.centerY + (clickY / h - 0.5) * scale;
+
+                AppState.fractal.centerX = newCenterX;
+                AppState.fractal.centerY = newCenterY;
+                AppState.fractal.zoom *= 2;
+
+                document.getElementById('zoomSlider').value = Math.min(AppState.fractal.zoom, 1000);
+                document.getElementById('zoomValue').textContent = `${Math.round(AppState.fractal.zoom)}x`;
+
+                renderFractal();
+                saveState();
+            });
+
+            window.addEventListener('resize', () => {
+                resizeCanvas(fractalCanvas);
+                renderFractal();
+            });
+
+            fractalInitialized = true;
+            renderFractal();
+        }
+
+        function getColor(iteration, maxIter, palette) {
+            if (iteration === maxIter) return [0, 0, 0];
+
+            const t = iteration / maxIter;
+            
+            switch (palette) {
+                case 'fire':
+                    return [
+                        Math.floor(Math.min(255, t * 3 * 255)),
+                        Math.floor(Math.max(0, Math.min(255, (t - 0.33) * 3 * 255))),
+                        Math.floor(Math.max(0, (t - 0.67) * 3 * 255))
+                    ];
+                case 'ocean':
+                    return [
+                        Math.floor(t * 50),
+                        Math.floor(50 + t * 150),
+                        Math.floor(150 + t * 105)
+                    ];
+                case 'grayscale':
+                    const val = Math.floor(t * 255);
+                    return [val, val, val];
+                case 'neon':
+                    return [
+                        Math.floor(Math.sin(t * Math.PI * 2) * 127 + 128),
+                        Math.floor(Math.sin(t * Math.PI * 2 + 2) * 127 + 128),
+                        Math.floor(Math.sin(t * Math.PI * 2 + 4) * 127 + 128)
+                    ];
+                default: // rainbow
+                    const h = t * 360;
+                    const s = 0.8;
+                    const l = 0.5;
+                    return hslToRgb(h, s, l);
+            }
+        }
+
+        function hslToRgb(h, s, l) {
+            const c = (1 - Math.abs(2 * l - 1)) * s;
+            const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+            const m = l - c / 2;
+            let r, g, b;
+
+            if (h < 60) { r = c; g = x; b = 0; }
+            else if (h < 120) { r = x; g = c; b = 0; }
+            else if (h < 180) { r = 0; g = c; b = x; }
+            else if (h < 240) { r = 0; g = x; b = c; }
+            else if (h < 300) { r = x; g = 0; b = c; }
+            else { r = c; g = 0; b = x; }
+
+            return [
+                Math.round((r + m) * 255),
+                Math.round((g + m) * 255),
+                Math.round((b + m) * 255)
+            ];
+        }
+
+        function renderFractal() {
+            if (!fractalCtx || !fractalCanvas) return;
+
+            const w = fractalCanvas.width / window.devicePixelRatio;
+            const h = fractalCanvas.height / window.devicePixelRatio;
+            const { type, iterations, zoom, centerX, centerY, palette, juliaC } = AppState.fractal;
+
+            // Use lower resolution for performance during interaction
+            const scale = 1;
+            const renderW = Math.floor(w / scale);
+            const renderH = Math.floor(h / scale);
+
+            fractalImageData = fractalCtx.createImageData(renderW, renderH);
+            const data = fractalImageData.data;
+
+            const aspectRatio = w / h;
+            const viewHeight = 4 / zoom;
+            const viewWidth = viewHeight * aspectRatio;
+
+            const xMin = centerX - viewWidth / 2;
+            const xMax = centerX + viewWidth / 2;
+            const yMin = centerY - viewHeight / 2;
+            const yMax = centerY + viewHeight / 2;
+
+            for (let py = 0; py < renderH; py++) {
+                for (let px = 0; px < renderW; px++) {
+                    const x0 = xMin + (px / renderW) * (xMax - xMin);
+                    const y0 = yMin + (py / renderH) * (yMax - yMin);
+
+                    let x, y, cx, cy;
+
+                    if (type === 'mandelbrot') {
+                        x = 0;
+                        y = 0;
+                        cx = x0;
+                        cy = y0;
+                    } else {
+                        x = x0;
+                        y = y0;
+                        cx = juliaC.real;
+                        cy = juliaC.imag;
+                    }
+
+                    let iteration = 0;
+
+                    while (x * x + y * y <= 4 && iteration < iterations) {
+                        const xTemp = x * x - y * y + cx;
+                        y = 2 * x * y + cy;
+                        x = xTemp;
+                        iteration++;
+                    }
+
+                    const [r, g, b] = getColor(iteration, iterations, palette);
+                    const idx = (py * renderW + px) * 4;
+                    data[idx] = r;
+                    data[idx + 1] = g;
+                    data[idx + 2] = b;
+                    data[idx + 3] = 255;
+                }
+            }
+
+            // Scale up image data to full size
+            const fullImageData = fractalCtx.createImageData(w, h);
+            const fullData = fullImageData.data;
+
+            for (let py = 0; py < h; py++) {
+                for (let px = 0; px < w; px++) {
+                    const srcPx = Math.min(Math.floor(px / scale), renderW - 1);
+                    const srcPy = Math.min(Math.floor(py / scale), renderH - 1);
+                    const srcIdx = (srcPy * renderW + srcPx) * 4;
+                    const dstIdx = (py * w + px) * 4;
+                    fullData[dstIdx] = data[srcIdx];
+                    fullData[dstIdx + 1] = data[srcIdx + 1];
+                    fullData[dstIdx + 2] = data[srcIdx + 2];
+                    fullData[dstIdx + 3] = 255;
+                }
+            }
+
+            fractalCtx.putImageData(fullImageData, 0, 0);
+        }
+
+        function updateIterations(val) {
+            AppState.fractal.iterations = parseInt(val);
+            document.getElementById('iterValue').textContent = val;
+            renderFractal();
+            saveState();
+        }
+
+        function updateFractalZoom(val) {
+            AppState.fractal.zoom = parseFloat(val);
+            document.getElementById('zoomValue').textContent = `${val}x`;
+            renderFractal();
+            saveState();
+        }
+
+        function changePalette(val) {
+            AppState.fractal.palette = val;
+            renderFractal();
+            saveState();
+        }
+
+        function updateJuliaC() {
+            const real = parseFloat(document.getElementById('cRealSlider').value);
+            const imag = parseFloat(document.getElementById('cImagSlider').value);
+            AppState.fractal.juliaC.real = real;
+            AppState.fractal.juliaC.imag = imag;
+            document.getElementById('cRealValue').textContent = real.toFixed(2);
+            document.getElementById('cImagValue').textContent = imag.toFixed(2);
+            renderFractal();
+            saveState();
+        }
+
+        function resetFractal() {
+            AppState.fractal = {
+                type: AppState.fractal.type,
+                iterations: 100,
+                zoom: 1,
+                centerX: -0.5,
+                centerY: 0,
+                palette: 'rainbow',
+                juliaC: { real: -0.7, imag: 0.27 }
+            };
+
+            document.getElementById('iterSlider').value = 100;
+            document.getElementById('zoomSlider').value = 1;
+            document.getElementById('iterValue').textContent = '100';
+            document.getElementById('zoomValue').textContent = '1x';
+
+            if (AppState.fractal.type === 'julia') {
+                document.getElementById('cRealSlider').value = -0.7;
+                document.getElementById('cImagSlider').value = 0.27;
+                document.getElementById('cRealValue').textContent = '-0.7';
+                document.getElementById('cImagValue').textContent = '0.27';
+            }
+
+            renderFractal();
+            saveState();
+            showToast('Fractal resetado', 'info');
+        }
+
+        function downloadFractal() {
+            if (!fractalCanvas) return;
+            const link = document.createElement('a');
+            link.download = `fractal_${AppState.fractal.type}.png`;
+            link.href = fractalCanvas.toDataURL();
+            link.click();
+            showToast('Fractal salvo!', 'success');
+        }
+
+        // ============================================
+        // KATEX INITIALIZATION
+        // ============================================
+        
+        function initKaTeX() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false}
+                ],
+                throwOnError: false
+            });
+        }
+
+        // ============================================
+        // APPLICATION INITIALIZATION
+        // ============================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load saved state
+            loadState();
+
+            // Apply saved mode
+            if (AppState.advancedMode) {
+                document.getElementById('toggleSwitch').classList.add('active');
+            }
+
+            // Render modules grid
+            renderModulesGrid();
+
+            // Initialize KaTeX
+            initKaTeX();
+
+            // Navigate to saved or default section
+            navigateTo(AppState.currentSection || 'home');
+
+            console.log('%c🚀 MathSpace Academy Loaded!', 
+                'color: #3b82f6; font-size: 16px; font-weight: bold;');
+            console.log('%cExplore mathematics interactively!', 
+                'color: #8b5cf6; font-size: 12px;');
+        });
+
+        // Handle escape key for modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(m => {
+                    m.classList.remove('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
